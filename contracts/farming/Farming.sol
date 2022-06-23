@@ -2,6 +2,7 @@
 pragma solidity =0.8.12;
 
 import "../interfaces/IPlatformToken.sol";
+import "../libraries/TransferHelper.sol";
 import "../utils/access/Ownable.sol";
 import "../utils/SafeCast.sol";
 import "../utils/ReentrancyGuard.sol";
@@ -29,7 +30,7 @@ contract Farming is Ownable, ReentrancyGuard {
     struct PoolInfo {
         address lpToken; // Address of LP token contract.
         uint32 bonusMultiplier; // Bonus multiplier for the farming pool
-        uint64 bonusEndBlock; 
+        uint64 bonusEndBlock;
         uint256 totalStaked;
         uint64 allocPoint; // How many allocation points assigned to this pool. PTNs to distribute per block.
         uint64 lastRewardBlock; // Last block number that PTNs distribution occurs.
@@ -125,8 +126,9 @@ contract Farming is Ownable, ReentrancyGuard {
             return _to - _from;
         } else {
             return
-                (poolInfo[_pid].bonusEndBlock -_from) * poolInfo[_pid].bonusMultiplier + (
-                    _to - poolInfo[_pid].bonusEndBlock);
+                (poolInfo[_pid].bonusEndBlock - _from) *
+                poolInfo[_pid].bonusMultiplier +
+                (_to - poolInfo[_pid].bonusEndBlock);
         }
     }
 
@@ -168,7 +170,13 @@ contract Farming is Ownable, ReentrancyGuard {
             })
         );
         addedTokens[_lpToken] = true;
-        emit AddPool(poolInfo.length - 1, _allocPoint, _lpToken, _bonusMultiplier, _bonusEndBlock);
+        emit AddPool(
+            poolInfo.length - 1,
+            _allocPoint,
+            _lpToken,
+            _bonusMultiplier,
+            _bonusEndBlock
+        );
     }
 
     /// @notice Update the given pool's PTN allocation point. Can only be called by the owner.
@@ -245,7 +253,8 @@ contract Farming is Ownable, ReentrancyGuard {
             }
         }
         if (_amount > 0) {
-            IKIP7(pool.lpToken).safeTransferFrom(
+            TransferHelper.safeTransferFrom(
+                pool.lpToken,
                 msg.sender,
                 address(this),
                 _amount
@@ -274,7 +283,7 @@ contract Farming is Ownable, ReentrancyGuard {
         if (_amount > 0) {
             user.amount -= _amount;
             pool.totalStaked -= _amount;
-            IKIP7(pool.lpToken).safeTransfer(msg.sender, _amount);
+            TransferHelper.safeTransfer(pool.lpToken, msg.sender, _amount);
         }
         user.rewardDebt = (user.amount * pool.accPtnPerShare) / ACC_PRECISION;
         emit Withdraw(msg.sender, _pid, _amount);
@@ -286,9 +295,9 @@ contract Farming is Ownable, ReentrancyGuard {
     function safePtnTransfer(address _to, uint256 _amount) internal {
         uint256 ptnBal = ptn.balanceOf(address(this));
         if (_amount > ptnBal) {
-            ptn.safeTransfer(_to, ptnBal);
+            TransferHelper.safeTransfer(address(ptn), _to, ptnBal);
         } else {
-            ptn.safeTransfer(_to, _amount);
+            TransferHelper.safeTransfer(address(ptn), _to, _amount);
         }
     }
 
@@ -333,28 +342,5 @@ contract Farming is Ownable, ReentrancyGuard {
         }
         return
             ((user.amount * accPtnPerShare) / ACC_PRECISION) - user.rewardDebt;
-    }
-
-    /**
-     * @notice Handle the receipt of KIP-7 token
-     * @dev The KIP-7 smart contract calls this function on the recipient
-     *  after a `safeTransfer`. This function MAY throw to revert and reject the
-     *  transfer. Return of other than the magic value MUST result in the
-     *  transaction being reverted.
-     *  Note: the contract address is always the message sender.
-     * @param _operator The address which called `safeTransferFrom` function
-     * @param _from The address which previously owned the token
-     * @param _amount The token amount which is being transferred.
-     * @param _data Additional data with no specified format
-     * @return `bytes4(keccak256("onKIP7Received(address,address,uint256,bytes)"))`
-     *  unless throwing
-     */
-    function onKIP7Received(
-        address _operator,
-        address _from,
-        uint256 _amount,
-        bytes memory _data
-    ) public pure returns (bytes4) {
-        return 0x9d188c22;
     }
 }

@@ -51,13 +51,18 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     mapping(address => UserInfo) public userInfo;
 
     event Deposit(address indexed user, uint256 amount);
+    event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
+    event UpdatePool(
+        uint256 lastRewardBlock,
+        uint256 stakedTokenSupply,
+        uint256 accTokenPerShare
+    );
     event NewStartAndEndBlocks(uint256 startBlock, uint256 endBlock);
     event NewRewardPerBlock(uint256 rewardPerBlock);
     event NewPoolLimit(uint256 poolLimitPerUser);
     event RewardsStop(uint256 blockNumber);
     event TokenRecovery(address indexed token, uint256 amount);
-    event Withdraw(address indexed user, uint256 amount);
 
     constructor() {
         STAKING_FACTORY = msg.sender;
@@ -345,24 +350,27 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
      * @notice Update reward variables of the given pool to be up-to-date.
      */
     function _updatePool() internal {
-        if (block.number <= pool.lastRewardBlock) {
-            return;
-        }
-
-        uint256 stakedTokenSupply = pool.totalStaked;
-
-        if (stakedTokenSupply == 0) {
+        if (block.number > pool.lastRewardBlock) {
+            uint256 stakedTokenSupply = pool.totalStaked;
+            if (stakedTokenSupply > 0) {
+                uint256 multiplier = _getMultiplier(
+                    pool.lastRewardBlock,
+                    block.number
+                );
+                uint256 ptnReward = multiplier * pool.rewardPerBlock;
+                pool.accTokenPerShare =
+                    pool.accTokenPerShare +
+                    (ptnReward * PRECISION_FACTOR) /
+                    stakedTokenSupply;
+                pool.lastRewardBlock = (block.number).toUint64();
+            }
             pool.lastRewardBlock = (block.number).toUint64();
-            return;
+            emit UpdatePool(
+                pool.lastRewardBlock,
+                stakedTokenSupply,
+                pool.accTokenPerShare
+            );
         }
-
-        uint256 multiplier = _getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 ptnReward = multiplier * pool.rewardPerBlock;
-        pool.accTokenPerShare =
-            pool.accTokenPerShare +
-            (ptnReward * PRECISION_FACTOR) /
-            stakedTokenSupply;
-        pool.lastRewardBlock = (block.number).toUint64();
     }
 
     /*

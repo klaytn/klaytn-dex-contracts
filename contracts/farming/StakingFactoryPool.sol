@@ -62,7 +62,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     event NewRewardPerBlock(uint256 rewardPerBlock);
     event NewPoolLimit(uint256 poolLimitPerUser);
     event RewardsStop(uint256 blockNumber);
-    event TokenRecovery(address indexed token, uint256 amount);
+    event TokenRecovery(address indexed token, address recipient, uint256 amount);
 
     constructor() {
         STAKING_FACTORY = msg.sender;
@@ -226,9 +226,10 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     /**
      * @notice Allows the owner to recover tokens sent to the contract by mistake
      * @param _token: token address
+     * @param _recipient: token address
      * @dev Callable by owner
      */
-    function recoverToken(address _token) external onlyOwner {
+    function recoverToken(address _token, address _recipient) external onlyOwner {
         require(
             _token != pool.stakedToken,
             "Operations: Cannot recover staked token"
@@ -241,9 +242,9 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         uint256 balance = IKIP7Metadata(_token).balanceOf(address(this));
         require(balance != 0, "Operations: Cannot recover zero balance");
 
-        TransferHelper.safeTransfer(_token, address(msg.sender), balance);
+        TransferHelper.safeTransfer(_token, _recipient, balance);
 
-        emit TokenRecovery(_token, balance);
+        emit TokenRecovery(_token, _recipient, balance);
     }
 
     /*

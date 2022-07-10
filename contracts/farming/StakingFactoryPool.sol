@@ -363,7 +363,6 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
                     pool.accTokenPerShare +
                     (ptnReward * PRECISION_FACTOR) /
                     stakedTokenSupply;
-                pool.lastRewardBlock = (block.number).toUint64();
             }
             pool.lastRewardBlock = (block.number).toUint64();
             emit UpdatePool(

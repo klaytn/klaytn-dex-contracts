@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
   networks: {
     // hardhat: {
     //   forking: {
-    //     url: 'https://baobab.fandom.finance/archive',
+    //     url: 'https://cypress.fandom.finance/archive',
     //   },
     // },
     baobab: {

@@ -48,7 +48,7 @@ describe('StakingFactory', () => {
     // Fake $Cake Token
     fakePtn = await MockERC20.deploy(parseEther('100'));
 
-    stakingFactory = await StakingPoolFactory.deploy();
+    stakingFactory = await StakingPoolFactory.deploy(alice.address);
   });
 
   describe('Staking #1 - NO POOL LIMIT', async () => {
@@ -81,6 +81,7 @@ describe('StakingFactory', () => {
       await mockPT.transfer(staking.address, parseEther('4000'));
     });
     it('Users deposit', async () => {
+      // eslint-disable-next-line no-restricted-syntax
       for (const thisUser of [bob, carol, david, erin]) {
         await mockPTN.transfer(thisUser.address, parseEther('1000'));
         await mockPTN.connect(thisUser).approve(staking.address, parseEther('1000'));
@@ -147,6 +148,7 @@ describe('StakingFactory', () => {
 
     it('Advance to end of IFO', async () => {
       await advanceBlockTo(endBlock.toNumber() + 1);
+      // eslint-disable-next-line no-restricted-syntax
       for (const thisUser of [bob, david, erin]) {
         await staking.connect(thisUser).withdraw(parseEther('100'));
         expect(await staking.pendingReward(thisUser.address)).to.be.equal(0);
@@ -213,7 +215,7 @@ describe('StakingFactory', () => {
     it('Owner can recover token', async () => {
       await fakePtn.transfer(staking.address, amount);
 
-      await expect(staking.recoverToken(fakePtn.address))
+      await expect(staking.recoverToken(fakePtn.address, alice.address))
         .to.emit(staking, 'TokenRecovery')
         .withArgs(
           fakePtn.address,
@@ -229,7 +231,7 @@ describe('StakingFactory', () => {
 
     it('Owner cannot recover token if balance is zero', async () => {
       await expect(
-        staking.recoverToken(fakePtn.address),
+        staking.recoverToken(fakePtn.address, alice.address),
       ).to.be.revertedWith(
         'Operations: Cannot recover zero balance',
       );
@@ -237,7 +239,7 @@ describe('StakingFactory', () => {
 
     it('Owner cannot recover staked token', async () => {
       await expect(
-        staking.recoverToken(mockPTN.address),
+        staking.recoverToken(mockPTN.address, alice.address),
       ).to.be.revertedWith(
         'Operations: Cannot recover staked token',
       );
@@ -245,7 +247,7 @@ describe('StakingFactory', () => {
 
     it('Owner cannot recover reward token', async () => {
       await expect(
-        staking.recoverToken(mockPT.address),
+        staking.recoverToken(mockPT.address, alice.address),
       ).to.be.revertedWith(
         'Operations: Cannot recover reward token',
       );

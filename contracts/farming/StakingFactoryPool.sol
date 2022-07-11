@@ -219,14 +219,14 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
      * @notice Stop rewards
      * @dev Only callable by owner. Needs to be for emergency.
      */
-    function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
-        TransferHelper.safeTransfer(pool.rewardToken, msg.sender, _amount);
+    function emergencyRewardWithdraw(uint256 _amount, address _recipient) external onlyOwner {
+        TransferHelper.safeTransfer(pool.rewardToken, _recipient, _amount);
     }
 
     /**
      * @notice Allows the owner to recover tokens sent to the contract by mistake
      * @param _token: token address
-     * @param _recipient: token address
+     * @param _recipient: A wallet's address to trasfet tokens to
      * @dev Callable by owner
      */
     function recoverToken(address _token, address _recipient) external onlyOwner {

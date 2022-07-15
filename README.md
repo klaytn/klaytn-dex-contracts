@@ -1,6 +1,6 @@
-# Repo template
+# Klaytn-DEX Project
 
-Template repository to help setup new projects in ground-x.
+Open-source DEX for Klaytn. This repository is for smart-contracts part of DEX.
 
 ## Checklist
 

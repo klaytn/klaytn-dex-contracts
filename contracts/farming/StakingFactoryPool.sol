@@ -121,8 +121,8 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Deposit staked tokens and collect reward tokens (if any)
-     * @param _amount: amount to withdraw (in rewardToken)
+     * @dev Deposit staked tokens and collect reward tokens (if any)
+     * @param _amount amount to deposit (in stakedToken)
      */
     function deposit(uint256 _amount) external nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
@@ -166,8 +166,8 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Withdraw staked tokens and collect reward tokens
-     * @param _amount: amount to withdraw (in rewardToken)
+     * @notice Withdraw staked tokens and collect reward tokens(if any)
+     * @param _amount amount to withdraw (in stakedToken)
      */
     function withdraw(uint256 _amount) external nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
@@ -195,7 +195,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Withdraw staked tokens without caring about rewards rewards
+     * @notice Withdraw staked tokens without caring about rewards
      * @dev Needs to be for emergency.
      */
     function emergencyWithdraw() external nonReentrant {
@@ -217,16 +217,18 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
 
     /**
      * @notice Stop rewards
-     * @dev Only callable by owner. Needs to be for emergency.
+     * @dev Only callable by multisig contract. Needs to be for emergency.
+     * @param _amount: Amount of reward tokens to transfer
+     * @param _recipient: A wallet's address to trasfer tokens to
      */
     function emergencyRewardWithdraw(uint256 _amount, address _recipient) external onlyOwner {
         TransferHelper.safeTransfer(pool.rewardToken, _recipient, _amount);
     }
 
     /**
-     * @notice Allows the owner to recover tokens sent to the contract by mistake
-     * @param _token: token address
-     * @param _recipient: A wallet's address to trasfet tokens to
+     * @notice Allows the multisig contract to recover tokens sent to the contract by mistake
+     * @param _token: Recoverable token address
+     * @param _recipient: A wallet's address to trasfer tokens to
      * @dev Callable by owner
      */
     function recoverToken(address _token, address _recipient) external onlyOwner {
@@ -247,18 +249,18 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         emit TokenRecovery(_token, _recipient, balance);
     }
 
-    /*
+    /**
      * @notice Stop rewards
-     * @dev Only callable by owner
+     * @dev Only callable by the multisig contract
      */
     function stopReward() external onlyOwner {
         pool.rewardEndBlock = (block.number).toUint64();
         emit RewardsStop(pool.rewardEndBlock);
     }
 
-    /*
+    /**
      * @notice Update pool limit per user
-     * @dev Only callable by owner.
+     * @dev Only callable by multisig contract.
      * @param _userLimit: whether the limit remains forced
      * @param _poolLimitPerUser: new pool limit per user
      */
@@ -280,9 +282,9 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         emit NewPoolLimit(pool.poolLimitPerUser);
     }
 
-    /*
+    /**
      * @notice Update reward per block
-     * @dev Only callable by owner.
+     * @dev Only callable by multisig contract.
      * @param _rewardPerBlock: the reward per block
      */
     function updateRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
@@ -293,7 +295,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
 
     /**
      * @notice It allows the admin to update start and end blocks
-     * @dev This function is only callable by owner.
+     * @dev This function is only callable by multisig contract.
      * @param _startBlock: the new start block
      * @param _rewardEndBlock: the new end block
      */
@@ -320,9 +322,9 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         emit NewStartAndEndBlocks(_startBlock, _rewardEndBlock);
     }
 
-    /*
+    /**
      * @notice View function to see pending reward on frontend.
-     * @param _user: user address
+     * @param _user: user's address
      * @return Pending reward for a given user
      */
     function pendingReward(address _user) external view returns (uint256) {
@@ -347,7 +349,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         }
     }
 
-    /*
+    /**
      * @notice Update reward variables of the given pool to be up-to-date.
      */
     function _updatePool() internal {
@@ -373,8 +375,8 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         }
     }
 
-    /*
-     * @notice Return reward multiplier over the given _from to _to block.
+    /**
+     * @notice Return reward multiplier over the given `_from` to `_to` block.
      * @param _from: block to start
      * @param _to: block to finish
      */
@@ -392,7 +394,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         }
     }
 
-    /*
+    /**
      * @notice Return user limit is set or zero.
      */
     function hasUserLimit() public view returns (bool) {

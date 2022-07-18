@@ -9,12 +9,13 @@ contract StakingFactory is Ownable {
     event NewStakingContract(address indexed staking);
 
     constructor(address _multisig) {
-        // Transfer ownership to the admin address who becomes owner of the contract
+        // Transfer ownership to the multisig contract who becomes the owner of the contract
         transferOwnership(_multisig);
     }
 
     /**
-     * @notice Deploy the pool
+     * @notice Deploy new staking pool contract
+     * @dev Can only be called by the multisig contract
      * @param _stakedToken staked token address
      * @param _rewardToken reward token address
      * @param _rewardPerBlock reward per block (in rewardToken)

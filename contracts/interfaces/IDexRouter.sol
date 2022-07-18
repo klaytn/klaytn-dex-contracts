@@ -24,11 +24,11 @@ interface IDexRouter {
             uint256 liquidity
         );
 
-    function addLiquidityETH(
+    function addLiquidityKLAY(
         address token,
         uint256 amountTokenDesired,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline
     )
@@ -36,7 +36,7 @@ interface IDexRouter {
         payable
         returns (
             uint256 amountToken,
-            uint256 amountETH,
+            uint256 amountKLAY,
             uint256 liquidity
         );
 
@@ -50,14 +50,14 @@ interface IDexRouter {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB);
 
-    function removeLiquidityETH(
+    function removeLiquidityKLAY(
         address token,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountToken, uint256 amountETH);
+    ) external returns (uint256 amountToken, uint256 amountKLAY);
 
     function removeLiquidityWithPermit(
         address tokenA,
@@ -73,18 +73,18 @@ interface IDexRouter {
         bytes32 s
     ) external returns (uint256 amountA, uint256 amountB);
 
-    function removeLiquidityETHWithPermit(
+    function removeLiquidityKLAYWithPermit(
         address token,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline,
         bool approveMax,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external returns (uint256 amountToken, uint256 amountETH);
+    ) external returns (uint256 amountToken, uint256 amountKLAY);
 
     function swapExactTokensForTokens(
         uint256 amountIn,
@@ -102,14 +102,14 @@ interface IDexRouter {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapExactETHForTokens(
+    function swapExactKLAYForTokens(
         uint256 amountOutMin,
         address[] calldata path,
         address to,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
-    function swapTokensForExactETH(
+    function swapTokensForExactKLAY(
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
@@ -117,7 +117,7 @@ interface IDexRouter {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapExactTokensForETH(
+    function swapExactTokensForKLAY(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
@@ -125,7 +125,7 @@ interface IDexRouter {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapETHForExactTokens(
+    function swapKLAYForExactTokens(
         uint256 amountOut,
         address[] calldata path,
         address to,
@@ -160,27 +160,27 @@ interface IDexRouter {
         view
         returns (uint256[] memory amounts);
 
-    function removeLiquidityETHSupportingFeeOnTransferTokens(
+    function removeLiquidityKLAYSupportingFeeOnTransferTokens(
         address token,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountETH);
+    ) external returns (uint256 amountKLAY);
 
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+    function removeLiquidityKLAYWithPermitSupportingFeeOnTransferTokens(
         address token,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline,
         bool approveMax,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external returns (uint256 amountETH);
+    ) external returns (uint256 amountKLAY);
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint256 amountIn,
@@ -190,14 +190,14 @@ interface IDexRouter {
         uint256 deadline
     ) external;
 
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+    function swapExactKLAYForTokensSupportingFeeOnTransferTokens(
         uint256 amountOutMin,
         address[] calldata path,
         address to,
         uint256 deadline
     ) external payable;
 
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    function swapExactTokensForKLAYSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,

@@ -24,7 +24,7 @@ contract DexRouter is IDexRouter {
     }
 
     receive() external payable {
-        assert(msg.sender == WKLAY); // only accept ETH via fallback from the WKLAY contract
+        assert(msg.sender == WKLAY); // only accept KLAY via fallback from the WKLAY contract
     }
 
     // **** ADD LIQUIDITY ****
@@ -109,11 +109,11 @@ contract DexRouter is IDexRouter {
         liquidity = IDexPair(pair).mint(to);
     }
 
-    function addLiquidityETH(
+    function addLiquidityKLAY(
         address token,
         uint256 amountTokenDesired,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline
     )
@@ -124,26 +124,26 @@ contract DexRouter is IDexRouter {
         ensure(deadline)
         returns (
             uint256 amountToken,
-            uint256 amountETH,
+            uint256 amountKLAY,
             uint256 liquidity
         )
     {
-        (amountToken, amountETH) = _addLiquidity(
+        (amountToken, amountKLAY) = _addLiquidity(
             token,
             WKLAY,
             amountTokenDesired,
             msg.value,
             amountTokenMin,
-            amountETHMin
+            amountKLAYMin
         );
         address pair = DexLibrary.pairFor(factory, token, WKLAY);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
-        IWKLAY(WKLAY).deposit{value: amountETH}();
-        assert(IWKLAY(WKLAY).transfer(pair, amountETH));
+        IWKLAY(WKLAY).deposit{value: amountKLAY}();
+        assert(IWKLAY(WKLAY).transfer(pair, amountKLAY));
         liquidity = IDexPair(pair).mint(to);
-        // refund dust eth, if any
-        if (msg.value > amountETH)
-            TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
+        // refund dust klay, if any
+        if (msg.value > amountKLAY)
+            TransferHelper.safeTransferKLAY(msg.sender, msg.value - amountKLAY);
     }
 
     // **** REMOVE LIQUIDITY ****
@@ -175,11 +175,11 @@ contract DexRouter is IDexRouter {
             revert InsufficientAmount("DexRouter: INSUFFICIENT_B_AMOUNT");
     }
 
-    function removeLiquidityETH(
+    function removeLiquidityKLAY(
         address token,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline
     )
@@ -187,20 +187,20 @@ contract DexRouter is IDexRouter {
         virtual
         override
         ensure(deadline)
-        returns (uint256 amountToken, uint256 amountETH)
+        returns (uint256 amountToken, uint256 amountKLAY)
     {
-        (amountToken, amountETH) = removeLiquidity(
+        (amountToken, amountKLAY) = removeLiquidity(
             token,
             WKLAY,
             liquidity,
             amountTokenMin,
-            amountETHMin,
+            amountKLAYMin,
             address(this),
             deadline
         );
         TransferHelper.safeTransfer(token, to, amountToken);
-        IWKLAY(WKLAY).withdraw(amountETH);
-        TransferHelper.safeTransferETH(to, amountETH);
+        IWKLAY(WKLAY).withdraw(amountKLAY);
+        TransferHelper.safeTransferKLAY(to, amountKLAY);
     }
 
     function removeLiquidityWithPermit(
@@ -238,11 +238,11 @@ contract DexRouter is IDexRouter {
         );
     }
 
-    function removeLiquidityETHWithPermit(
+    function removeLiquidityKLAYWithPermit(
         address token,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline,
         bool approveMax,
@@ -253,7 +253,7 @@ contract DexRouter is IDexRouter {
         external
         virtual
         override
-        returns (uint256 amountToken, uint256 amountETH)
+        returns (uint256 amountToken, uint256 amountKLAY)
     {
         address pair = DexLibrary.pairFor(factory, token, WKLAY);
         uint256 value = approveMax ? type(uint256).max : liquidity;
@@ -266,31 +266,31 @@ contract DexRouter is IDexRouter {
             r,
             s
         );
-        (amountToken, amountETH) = removeLiquidityETH(
+        (amountToken, amountKLAY) = removeLiquidityKLAY(
             token,
             liquidity,
             amountTokenMin,
-            amountETHMin,
+            amountKLAYMin,
             to,
             deadline
         );
     }
 
     // **** REMOVE LIQUIDITY (supporting fee-on-transfer tokens) ****
-    function removeLiquidityETHSupportingFeeOnTransferTokens(
+    function removeLiquidityKLAYSupportingFeeOnTransferTokens(
         address token,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline
-    ) public virtual override ensure(deadline) returns (uint256 amountETH) {
-        (, amountETH) = removeLiquidity(
+    ) public virtual override ensure(deadline) returns (uint256 amountKLAY) {
+        (, amountKLAY) = removeLiquidity(
             token,
             WKLAY,
             liquidity,
             amountTokenMin,
-            amountETHMin,
+            amountKLAYMin,
             address(this),
             deadline
         );
@@ -299,22 +299,22 @@ contract DexRouter is IDexRouter {
             to,
             IKIP7(token).balanceOf(address(this))
         );
-        IWKLAY(WKLAY).withdraw(amountETH);
-        TransferHelper.safeTransferETH(to, amountETH);
+        IWKLAY(WKLAY).withdraw(amountKLAY);
+        TransferHelper.safeTransferKLAY(to, amountKLAY);
     }
 
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+    function removeLiquidityKLAYWithPermitSupportingFeeOnTransferTokens(
         address token,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountKLAYMin,
         address to,
         uint256 deadline,
         bool approveMax,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external virtual override returns (uint256 amountETH) {
+    ) external virtual override returns (uint256 amountKLAY) {
         address pair = DexLibrary.pairFor(factory, token, WKLAY);
         uint256 value = approveMax ? type(uint256).max : liquidity;
         IDexPair(pair).permit(
@@ -326,11 +326,11 @@ contract DexRouter is IDexRouter {
             r,
             s
         );
-        amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
+        amountKLAY = removeLiquidityKLAYSupportingFeeOnTransferTokens(
             token,
             liquidity,
             amountTokenMin,
-            amountETHMin,
+            amountKLAYMin,
             to,
             deadline
         );
@@ -412,7 +412,7 @@ contract DexRouter is IDexRouter {
         _swap(amounts, path, to);
     }
 
-    function swapExactETHForTokens(
+    function swapExactKLAYForTokens(
         uint256 amountOutMin,
         address[] calldata path,
         address to,
@@ -439,7 +439,7 @@ contract DexRouter is IDexRouter {
         _swap(amounts, path, to);
     }
 
-    function swapTokensForExactETH(
+    function swapTokensForExactKLAY(
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
@@ -463,10 +463,10 @@ contract DexRouter is IDexRouter {
         );
         _swap(amounts, path, address(this));
         IWKLAY(WKLAY).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
+        TransferHelper.safeTransferKLAY(to, amounts[amounts.length - 1]);
     }
 
-    function swapExactTokensForETH(
+    function swapExactTokensForKLAY(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
@@ -491,10 +491,10 @@ contract DexRouter is IDexRouter {
         );
         _swap(amounts, path, address(this));
         IWKLAY(WKLAY).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
+        TransferHelper.safeTransferKLAY(to, amounts[amounts.length - 1]);
     }
 
-    function swapETHForExactTokens(
+    function swapKLAYForExactTokens(
         uint256 amountOut,
         address[] calldata path,
         address to,
@@ -518,9 +518,9 @@ contract DexRouter is IDexRouter {
             )
         );
         _swap(amounts, path, to);
-        // refund dust eth, if any
+        // refund dust klay, if any
         if (msg.value > amounts[0])
-            TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
+            TransferHelper.safeTransferKLAY(msg.sender, msg.value - amounts[0]);
     }
 
     // **** SWAP (supporting fee-on-transfer tokens) ****
@@ -583,7 +583,7 @@ contract DexRouter is IDexRouter {
         ) revert InsufficientAmount("DexRouter: INSUFFICIENT_OUTPUT_AMOUNT");
     }
 
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+    function swapExactKLAYForTokensSupportingFeeOnTransferTokens(
         uint256 amountOutMin,
         address[] calldata path,
         address to,
@@ -607,7 +607,7 @@ contract DexRouter is IDexRouter {
         );
     }
 
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    function swapExactTokensForKLAYSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
@@ -628,7 +628,7 @@ contract DexRouter is IDexRouter {
             "DexRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
         IWKLAY(WKLAY).withdraw(amountOut);
-        TransferHelper.safeTransferETH(to, amountOut);
+        TransferHelper.safeTransferKLAY(to, amountOut);
     }
 
     // **** LIBRARY FUNCTIONS ****

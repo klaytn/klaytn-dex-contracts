@@ -42,15 +42,6 @@ const config: HardhatUserConfig = {
           },
         },
       },
-      'contracts/governance/Timelock.sol': {
-        version: '0.6.12',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
       'contracts/utils/SafeMath.sol': {
         version: '0.6.12',
         settings: {

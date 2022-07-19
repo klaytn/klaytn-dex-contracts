@@ -214,7 +214,8 @@ describe('DexRouter', () => {
         wallet.address,
         constants.MaxUint256,
       ),
-    ).to.be.revertedWith('InsufficientAmount("DexRouter: INSUFFICIENT_A_AMOUNT")');
+    ).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+      .withArgs('DexRouter: INSUFFICIENT_A_AMOUNT');
     await expect(
       router.addLiquidity(
         token0.address,
@@ -226,7 +227,8 @@ describe('DexRouter', () => {
         wallet.address,
         constants.MaxUint256,
       ),
-    ).to.be.revertedWith('InsufficientAmount("DexRouter: INSUFFICIENT_B_AMOUNT")');
+    ).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+      .withArgs('DexRouter: INSUFFICIENT_B_AMOUNT');
     await expect(
       router.addLiquidity(
         token0.address,
@@ -238,7 +240,7 @@ describe('DexRouter', () => {
         wallet.address,
         0,
       ),
-    ).to.be.revertedWith('Expired()');
+    ).to.be.revertedWithCustomError(router, 'Expired');
   });
 
   it('addLiquidityKLAY', async () => {
@@ -333,7 +335,8 @@ describe('DexRouter', () => {
         wallet.address,
         constants.MaxUint256,
       ),
-    ).to.be.revertedWith('InsufficientAmount("DexRouter: INSUFFICIENT_A_AMOUNT")');
+    ).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+      .withArgs('DexRouter: INSUFFICIENT_A_AMOUNT');
     await expect(
       router.removeLiquidity(
         token0.address,
@@ -344,7 +347,8 @@ describe('DexRouter', () => {
         wallet.address,
         constants.MaxUint256,
       ),
-    ).to.be.revertedWith('InsufficientAmount("DexRouter: INSUFFICIENT_B_AMOUNT")');
+    ).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+      .withArgs('DexRouter: INSUFFICIENT_B_AMOUNT');
   });
   it('removeLiquidityKLAY', async () => {
     const WKLAYPartnerAmount = ethers.utils.parseEther('1');
@@ -499,7 +503,7 @@ describe('DexRouter', () => {
           wallet.address,
           constants.MaxUint256,
         ),
-      ).to.be.revertedWith('InvalidPath()');
+      ).to.be.revertedWithCustomError(router, 'InvalidPath');
       await expect(
         router.swapExactTokensForKLAY(
           swapAmount,
@@ -508,7 +512,8 @@ describe('DexRouter', () => {
           wallet.address,
           constants.MaxUint256,
         ),
-      ).to.be.revertedWith('InsufficientAmount("DexRouter: INSUFFICIENT_OUTPUT_AMOUNT")');
+      ).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+        .withArgs('DexRouter: INSUFFICIENT_OUTPUT_AMOUNT');
       await expect(
         router.swapExactTokensForKLAY(
           swapAmount,
@@ -568,7 +573,7 @@ describe('DexRouter', () => {
             value: expectedSwapAmount,
           },
         ),
-      ).to.be.revertedWith('InvalidPath()');
+      ).to.be.revertedWithCustomError(router, 'InvalidPath');
       await expect(
         router.swapKLAYForExactTokens(
           outputAmount,
@@ -579,7 +584,7 @@ describe('DexRouter', () => {
             value: 5,
           },
         ),
-      ).to.be.revertedWith('ExcessiveInputAmount()');
+      ).to.be.revertedWithCustomError(router, 'ExcessiveInputAmount');
       await expect(
         router.swapKLAYForExactTokens(
           outputAmount,
@@ -643,7 +648,7 @@ describe('DexRouter', () => {
             value: swapAmount,
           },
         ),
-      ).to.be.revertedWith('InvalidPath()');
+      ).to.be.revertedWithCustomError(router, 'InvalidPath');
       await expect(
         router.swapExactKLAYForTokens(
           swapAmount,
@@ -654,7 +659,8 @@ describe('DexRouter', () => {
             value: 1,
           },
         ),
-      ).to.be.revertedWith('InsufficientAmount("DexRouter: INSUFFICIENT_OUTPUT_AMOUNT")');
+      ).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+        .withArgs('DexRouter: INSUFFICIENT_OUTPUT_AMOUNT');
       await expect(
         router.swapExactKLAYForTokens(
           0,
@@ -743,7 +749,7 @@ describe('DexRouter', () => {
           wallet.address,
           constants.MaxUint256,
         ),
-      ).to.be.revertedWith('ExcessiveInputAmount()');
+      ).to.be.revertedWithCustomError(router, 'ExcessiveInputAmount');
       await expect(
         router.swapTokensForExactKLAY(
           outputAmount,
@@ -752,7 +758,7 @@ describe('DexRouter', () => {
           wallet.address,
           constants.MaxUint256,
         ),
-      ).to.be.revertedWith('InvalidPath()');
+      ).to.be.revertedWithCustomError(router, 'InvalidPath');
       await expect(
         router.swapTokensForExactKLAY(
           outputAmount,
@@ -857,7 +863,7 @@ describe('DexRouter', () => {
           constants.MaxUint256,
         ),
       )
-        .to.be.revertedWith('ExcessiveInputAmount()');
+        .to.be.revertedWithCustomError(router, 'ExcessiveInputAmount');
       await expect(
         router.swapTokensForExactTokens(
           outputAmount,
@@ -1047,7 +1053,7 @@ describe('DexRouter fee-on-transfer tokens', async () => {
       {
         value: swapAmount,
       },
-    )).to.be.revertedWith('InvalidPath()');
+    )).to.be.revertedWithCustomError(router, 'InvalidPath');
 
     await router.swapExactKLAYForTokensSupportingFeeOnTransferTokens(
       0,
@@ -1077,7 +1083,7 @@ describe('DexRouter fee-on-transfer tokens', async () => {
       [WKLAY.address, DTT.address],
       wallet.address,
       constants.MaxUint256,
-    )).to.be.revertedWith('InvalidPath()');
+    )).to.be.revertedWithCustomError(router, 'InvalidPath');
 
     await router.swapExactTokensForKLAYSupportingFeeOnTransferTokens(
       swapAmount,

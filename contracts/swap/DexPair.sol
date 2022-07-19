@@ -16,8 +16,11 @@ contract DexPair is IDexPair, DexKIP7 {
     uint256 public constant MINIMUM_LIQUIDITY = 10**3;
     // bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
 
+    /// @notice Returns the factory address.
     address public immutable factory;
+    /// @notice Returns the address of the pair token with the lower sort order.
     address public token0;
+    /// @notice Returns the address of the pair token with the higher sort order.
     address public token1;
 
     uint112 private reserve0; // uses single storage slot, accessible via getReserves
@@ -26,6 +29,7 @@ contract DexPair is IDexPair, DexKIP7 {
 
     uint256 public price0CumulativeLast;
     uint256 public price1CumulativeLast;
+    /// @notice Returns the product of the reserves as of the most recent liquidity event.
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
 
     uint256 private unlocked = 1;
@@ -35,7 +39,11 @@ contract DexPair is IDexPair, DexKIP7 {
         _;
         unlocked = 1;
     }
-
+    /** 
+    * @notice Returns the reserves of token0 and token1 used to price 
+    * trades and distribute liquidity. Also returns the block.timestamp (mod 2**32) 
+    * of the last block during which an interaction occured for the pair.
+    */
     function getReserves()
         public
         view
@@ -63,14 +71,25 @@ contract DexPair is IDexPair, DexKIP7 {
         factory = msg.sender;
     }
 
-    // called once by the factory at time of deployment
+    /** 
+    * @dev called once by the factory at time of deployment. 
+    * Initializes pair contract with corresponding tokens
+    * @param _token0 Address of the token with the lower sort order.
+    * @param _token1 Address of the token with the higher sort order.
+    */
     function initialize(address _token0, address _token1) external {
         if (msg.sender != factory) revert Unauthorized(); // sufficient check
         token0 = _token0;
         token1 = _token1;
     }
 
-    // update reserves and, on the first call per block, price accumulators
+    /** 
+    * @dev update reserves and, on the first call per block, price accumulators
+    * @param balance0 Current balance of token0 in the pair calculated via balanceOf.
+    * @param balance1 Current balance of token1 in the pair calculated via balanceOf.
+    * @param _reserve0 Current reserve of token0 in the pair.
+    * @param _reserve1 Current reserve of token1 in the pair.
+    */
     function _update(
         uint256 balance0,
         uint256 balance1,
@@ -93,7 +112,7 @@ contract DexPair is IDexPair, DexKIP7 {
         emit Sync(reserve0, reserve1);
     }
 
-    // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
+    /// @dev if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
     function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
         address feeTo = IDexFactory(factory).feeTo();
         feeOn = feeTo != address(0);
@@ -114,7 +133,11 @@ contract DexPair is IDexPair, DexKIP7 {
         }
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    /** 
+    * @notice Creates pool tokens.
+    * Emits `Mint`, `Sync`, `Transfer` events.
+    * @dev this low-level function should be called from a contract which performs important safety checks
+    */ 
     function mint(address to) external lock returns (uint256 liquidity) {
         (uint112 _reserve0, uint112 _reserve1, ) = getReserves(); // gas savings
         uint256 balance0 = IKIP7(token0).balanceOf(address(this));
@@ -138,7 +161,11 @@ contract DexPair is IDexPair, DexKIP7 {
         emit Mint(msg.sender, amount0, amount1);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    /** 
+    * @notice Destroys pool tokens.
+    * Emits `Burn`, `Sync`, `Transfer` events.
+    * @dev this low-level function should be called from a contract which performs important safety checks
+    */ 
     function burn(address to) external lock returns (uint256 amount0, uint256 amount1) {
         (uint112 _reserve0, uint112 _reserve1, ) = getReserves(); // gas savings
         address _token0 = token0; // gas savings
@@ -163,7 +190,11 @@ contract DexPair is IDexPair, DexKIP7 {
         emit Burn(msg.sender, amount0, amount1, to);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    /** 
+    * @notice Swaps tokens. For regular swaps, data.length must be 0.
+    * @dev this low-level function should be called from a contract which performs important safety checks
+    * Emits Swap, Sync events.
+    */ 
     function swap(
         uint256 amount0Out,
         uint256 amount1Out,
@@ -202,7 +233,13 @@ contract DexPair is IDexPair, DexKIP7 {
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
     }
 
-    // force balances to match reserves
+    /** 
+    * @notice force balances to match reserves
+    * @dev skim() functions as a recovery mechanism in case enough tokens are sent to an pair to
+    * overflow the two uint112 storage slots for reserves, which could otherwise cause trades to
+    * fail. skim() allows a user to withdraw the difference between the current balance of the
+    * pair and 2112 − 1 to the caller, if that difference is greater than 0.
+    */ 
     function skim(address to) external lock {
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
@@ -210,7 +247,14 @@ contract DexPair is IDexPair, DexKIP7 {
         _safeTransfer(_token1, to, IKIP7(_token1).balanceOf(address(this)) - reserve1);
     }
 
-    // force reserves to match balances
+    /**
+    * @notice force reserves to match balances
+    * @dev sync() functions as a recovery mechanism in the case that a token asynchronously
+    * deflates the balance of a pair. In this case, trades will receive sub-optimal rates, and if no
+    * liquidity provider is willing to rectify the situation, the pair is stuck. sync() exists to set
+    * the reserves of the contract to the current balances, providing a somewhat graceful recovery
+    * from this situation.
+    */
     function sync() external lock {
         _update(IKIP7(token0).balanceOf(address(this)), IKIP7(token1).balanceOf(address(this)), reserve0, reserve1);
     }

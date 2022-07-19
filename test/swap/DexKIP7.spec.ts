@@ -76,7 +76,7 @@ describe('DexKIP7', () => {
       .to.be.revertedWith('KIP7: transfer to the zero address');
     const { factory } = await factoryFixture(wallet);
     await expect(token['safeTransfer(address,uint256)'](factory.address, TEST_AMOUNT))
-      .to.be.revertedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
+      .to.be.rejectedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
   });
 
   it('transfer:fail', async () => {

@@ -8,13 +8,20 @@ import * as dotenv from 'dotenv';
 
 let adminsList: string[];
 let sigRequired: string;
+let rewardPerBlock: string;
 dotenv.config();
 
 if (!process.env.ADMIN_LIST && !process.env.SIG_REQUIRED) {
-  throw new Error('Please set your ADMIN_LIST and SIG_REQUIRED in a .env file');
+  throw new Error('Please set your ADMIN_LIST and SIG_REQUIRED in the .env file');
 } else {
   adminsList = JSON.parse(process.env.ADMIN_LIST as string);
   sigRequired = JSON.parse(process.env.SIG_REQUIRED as string);
+}
+
+if (!process.env.REWARD_PER_BLOCK) {
+  throw new Error('Please set your rewardPerBlock param (in wei) for farming contract in the .env file');
+} else {
+  rewardPerBlock = JSON.parse(process.env.REWARD_PER_BLOCK as string);
 }
 
 async function main() {
@@ -69,7 +76,6 @@ async function main() {
 
   // Deploy Farming
   const farming = await ethers.getContractFactory('Farming');
-  const rewardPerBlock = ethers.utils.parseEther('0.005');
   const currentBlock = await ethers.provider.getBlockNumber();
   const farmingInstance = await farming.deploy(
     dexTokenInstance.address,

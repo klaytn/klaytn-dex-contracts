@@ -57,23 +57,71 @@ contract DexKIP7 is IDexKIP7, KIP13 {
             super.supportsInterface(interfaceId);
     }
 
+    /** @dev Creates `amount` tokens and assigns them to `to` address, increasing
+     * the total supply.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address.
+     * @param to The address to assign the newly created tokens to. Should not be 0, so
+       should be called from a contract which performs important safety checks
+     * @param amount The amount of tokens to create.  
+     */
     function _mint(address to, uint amount) internal {
         totalSupply = totalSupply + amount;
         balanceOf[to] = balanceOf[to] + amount;
         emit Transfer(address(0), to, amount);
     }
 
+    /**
+     * @dev Destroys `amount` tokens from `from` address, reducing the
+     * total supply.
+     *
+     * Emits a {Transfer} event with `to` set to the zero address.
+     *
+     * @param from The address to destroy tokens from. Should not be used with address(0)  
+     * and must have at least `amount` tokens, so should be called from a contract which performs important safety checks
+     * @param amount The amount to destroy tokens from `from` address.
+     */
     function _burn(address from, uint amount) internal {
         balanceOf[from] = balanceOf[from] - amount;
         totalSupply = totalSupply - amount;
         emit Transfer(from, address(0), amount);
     }
 
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
+     *
+     * This internal function is equivalent to `approve`, and can be used to
+     * e.g. set automatic allowances for certain subsystems, etc.
+     *
+     * Emits an {Approval} event.
+     *
+     * Requirements to check:
+     *
+     * - `owner` should not be the zero address.
+     * - `spender` should not be the zero address.
+     * @param owner The address which owns the tokens to approve.
+     * @param spender The address which is allowed to spend the tokens.
+     * @param amount The amount of tokens to allow `spender` to spend.
+     */
     function _approve(address owner, address spender, uint amount) private {
         allowance[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
 
+    /**
+     * @dev Moves `amount` of tokens from `from` to `to` address.
+     *
+     * This internal function is equivalent to {transfer}, and can be used to
+     * e.g. implement automatic token fees, slashing mechanisms, etc.
+     *
+     * Emits a {Transfer} event.
+     *
+     * Requirements to check:
+     *
+     * - `from` should not be the zero address.
+     * - `to` should not be the zero address.
+     * - `from` must have a balance of at least `amount`.
+     */
     function _transfer(address from, address to, uint amount) private {
         uint256 fromBalance = balanceOf[from];
         require(fromBalance >= amount, "KIP7: transfer amount exceeds balance");

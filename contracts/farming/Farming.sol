@@ -37,19 +37,19 @@ contract Farming is Ownable, ReentrancyGuard {
         uint128 accPtnPerShare; // Accumulated PTNs per share, times 1e12.
     }
 
-    // The PTN(Platform token) TOKEN!
+    /// @notice The PTN(Platform token) TOKEN!
     IPlatformToken public ptn;
 
-    // PTN tokens created per block.
+    /// @notice PTN tokens created per block.
     uint256 public ptnPerBlock;
-    // Info of each pool.
+    /// @notice Info of each pool.
     PoolInfo[] public poolInfo;
     mapping(address => bool) public addedTokens;
-    // Info of each user that stakes LP tokens.
+    /// @notice Info of each user that stakes LP tokens.
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
-    // Total allocation points. Must be the sum of all allocation points in all pools.
+    /// @notice Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint;
-    // The block number when PTN mining starts.
+    /// @notice The block number when PTN mining starts.
     uint256 public startBlock;
 
     uint256 private constant ACC_PRECISION = 1e12;

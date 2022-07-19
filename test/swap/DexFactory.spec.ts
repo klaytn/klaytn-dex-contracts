@@ -34,9 +34,11 @@ describe('DexFactory', () => {
       .withArgs(TEST_ADDRESSES[0], TEST_ADDRESSES[1], create2Address, 1);
 
     await expect(factory.createPair(...tokens)).to.be
-      .revertedWith('InvalidAddressParameters("DEX: PAIR_EXISTS")'); // DEX: PAIR_EXISTS
+      .revertedWithCustomError(factory, 'InvalidAddressParameters')
+      .withArgs('DEX: PAIR_EXISTS'); // DEX: PAIR_EXISTS
     await expect(factory.createPair(...tokens.slice()
-      .reverse())).to.be.revertedWith('InvalidAddressParameters("DEX: PAIR_EXISTS")'); // DEX: PAIR_EXISTS
+      .reverse())).to.be.revertedWithCustomError(factory, 'InvalidAddressParameters')
+      .withArgs('DEX: PAIR_EXISTS'); // DEX: PAIR_EXISTS
     expect(await factory.getPair(...tokens)).to.eq(create2Address);
     expect(await factory.getPair(...tokens.slice().reverse())).to.eq(create2Address);
     expect(await factory.allPairs(0)).to.eq(create2Address);
@@ -58,16 +60,19 @@ describe('DexFactory', () => {
 
   it('createPair:identical', async () => {
     await expect(createPair([TEST_ADDRESSES[0], TEST_ADDRESSES[0]] as [string, string])).to.be
-      .revertedWith('InvalidAddressParameters("DEX: IDENTICAL_ADDRESSES")');
+      .revertedWithCustomError(factory, 'InvalidAddressParameters').withArgs('DEX: IDENTICAL_ADDRESSES');
   });
 
   it('createPair:zero address', async () => {
     await expect(createPair([constants.AddressZero, TEST_ADDRESSES[0]] as [string, string])).to.be
-      .revertedWith('InvalidAddressParameters("DEX: ZERO_ADDRESS")');
+      .revertedWithCustomError(factory, 'InvalidAddressParameters')
+      .withArgs('DEX: ZERO_ADDRESS');
     await expect(createPair([TEST_ADDRESSES[0], constants.AddressZero] as [string, string])).to.be
-      .revertedWith('InvalidAddressParameters("DEX: ZERO_ADDRESS")');
+      .revertedWithCustomError(factory, 'InvalidAddressParameters')
+      .withArgs('DEX: ZERO_ADDRESS');
     await expect(createPair([constants.AddressZero, constants.AddressZero] as [string, string]))
-      .to.be.revertedWith('InvalidAddressParameters("DEX: IDENTICAL_ADDRESSES")');
+      .to.be.revertedWithCustomError(factory, 'InvalidAddressParameters')
+      .withArgs('DEX: IDENTICAL_ADDRESSES');
   });
 
   it('createPair:gas [ @skip-on-coverage ]', async () => {
@@ -77,15 +82,15 @@ describe('DexFactory', () => {
   });
 
   it('setFeeTo', async () => {
-    await expect(factory.connect(other).setFeeTo(other.address)).to.be.revertedWith('Unauthorized()');
+    await expect(factory.connect(other).setFeeTo(other.address)).to.be.revertedWithCustomError(factory, 'Unauthorized');
     await factory.setFeeTo(wallet.address);
     expect(await factory.feeTo()).to.eq(wallet.address);
   });
 
   it('setFeeToSetter', async () => {
-    await expect(factory.connect(other).setFeeToSetter(other.address)).to.be.revertedWith('Unauthorized()');
+    await expect(factory.connect(other).setFeeToSetter(other.address)).to.be.revertedWithCustomError(factory, 'Unauthorized');
     await factory.setFeeToSetter(other.address);
     expect(await factory.feeToSetter()).to.eq(other.address);
-    await expect(factory.setFeeToSetter(wallet.address)).to.be.revertedWith('Unauthorized()');
+    await expect(factory.setFeeToSetter(wallet.address)).to.be.revertedWithCustomError(factory, 'Unauthorized');
   });
 });

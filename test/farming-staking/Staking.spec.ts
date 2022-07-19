@@ -4,14 +4,14 @@ import { ethers } from 'hardhat';
 import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect, assert } from 'chai';
+import { mineUpTo } from '@nomicfoundation/hardhat-network-helpers';
 import { StakingFactory__factory } from '../../typechain/factories/farming/StakingFactory__factory';
 import { KIP7Mock__factory } from '../../typechain/factories/mocks/KIP7TestMock.sol/KIP7Mock__factory';
 import { StakingFactory } from '../../typechain/farming/StakingFactory';
 import { StakingInitializable } from '../../typechain/farming/StakingFactoryPool.sol/StakingInitializable';
 import { KIP7Mock } from '../../typechain/mocks/KIP7TestMock.sol/KIP7Mock';
-import { advanceBlockTo } from '../shared/utilities';
 
-describe('StakingFactory', () => {
+describe('Staking', () => {
   let alice: SignerWithAddress;
   let bob: SignerWithAddress;
   let carol: SignerWithAddress;
@@ -51,7 +51,7 @@ describe('StakingFactory', () => {
     stakingFactory = await StakingPoolFactory.deploy(alice.address);
   });
 
-  describe('Staking #1 - NO POOL LIMIT', async () => {
+  describe('Staking #1 - no limit pool', async () => {
     it('Deploy pool with StakingFactory', async () => {
       const address = await (await stakingFactory.deployPool(
         mockPTN.address,
@@ -92,17 +92,17 @@ describe('StakingFactory', () => {
     });
 
     it('Advance to startBlock', async () => {
-      await advanceBlockTo(startBlock.toNumber());
+      await mineUpTo(startBlock.toNumber());
       assert.equal(String(await staking.pendingReward(bob.address)), '0');
     });
 
     it('Advance to startBlock + 1', async () => {
-      await advanceBlockTo((startBlock.add(ethers.BigNumber.from(1))).toNumber());
+      await mineUpTo((startBlock.add(ethers.BigNumber.from(1))).toNumber());
       assert.equal(String(await staking.pendingReward(bob.address)), String(parseEther('2.5')));
     });
 
     it('Advance to startBlock + 10', async () => {
-      await advanceBlockTo((startBlock.add(ethers.BigNumber.from(10))).toNumber());
+      await mineUpTo((startBlock.add(ethers.BigNumber.from(10))).toNumber());
       assert.equal(String(await staking.pendingReward(carol.address)), String(parseEther('25')));
     });
 
@@ -147,7 +147,7 @@ describe('StakingFactory', () => {
     });
 
     it('Advance to end of IFO', async () => {
-      await advanceBlockTo(endBlock.toNumber() + 1);
+      await mineUpTo(endBlock.toNumber() + 1);
       // eslint-disable-next-line no-restricted-syntax
       for (const thisUser of [bob, david, erin]) {
         await staking.connect(thisUser).withdraw(parseEther('100'));
@@ -203,9 +203,7 @@ describe('StakingFactory', () => {
           0,
           alice.address,
         ),
-      ).to.be.revertedWith(
-        'Transaction reverted: function returned an unexpected amount of data',
-      );
+      ).to.be.rejectedWith('Transaction reverted: function returned an unexpected amount of data');
     });
   });
 
@@ -219,6 +217,7 @@ describe('StakingFactory', () => {
         .to.emit(staking, 'TokenRecovery')
         .withArgs(
           fakePtn.address,
+          alice.address,
           amount,
         )
         .to.emit(fakePtn, 'Transfer')

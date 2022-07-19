@@ -1,18 +1,13 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import * as dotenv from 'dotenv';
 import { Contract, BigNumber, constants } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { hexlify } from 'ethers/lib/utils';
-import { ecsign } from 'ethereumjs-util';
 import { routerFixture } from '../shared/fixtures';
-import { getApprovalDigest, mineBlock } from '../shared/utilities';
+import { getPermitSignature, mineBlock } from '../shared/utilities';
 import { DexFactory } from '../../typechain/swap/DexFactory';
 import { DexPair } from '../../typechain/swap/DexPair';
 import { KIP7Mock } from '../../typechain/mocks/KIP7TestMock.sol/KIP7Mock';
 import { DexRouter } from '../../typechain/swap/DexRouter';
-
-dotenv.config();
 
 const MINIMUM_LIQUIDITY = BigNumber.from(10).pow(3);
 
@@ -411,19 +406,21 @@ describe('DexRouter', () => {
     const expectedLiquidity = ethers.utils.parseEther('2');
 
     const nonce = await pair.nonces(wallet.address);
-    const digest = await getApprovalDigest(
+    const digest = await getPermitSignature(
+      wallet,
       pair,
+      31337,
       {
         owner: wallet.address,
         spender: router.address,
         value: expectedLiquidity.sub(MINIMUM_LIQUIDITY),
+        nonce,
+        deadline: constants.MaxUint256,
       },
-      nonce.toNumber(),
-      constants.MaxUint256,
-      31337,
     );
-    const signer = new ethers.Wallet(process.env.HH_PIVATE_KEY as string);
-    const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(signer.privateKey.slice(2), 'hex'));
+    const sig = ethers.utils.splitSignature(
+      ethers.utils.arrayify(digest),
+    );
 
     await router.removeLiquidityWithPermit(
       token0.address,
@@ -434,9 +431,9 @@ describe('DexRouter', () => {
       wallet.address,
       constants.MaxUint256,
       false,
-      v,
-      r,
-      s,
+      sig.v,
+      sig.r,
+      sig.s,
     );
   });
 
@@ -451,19 +448,19 @@ describe('DexRouter', () => {
     const expectedLiquidity = ethers.utils.parseEther('2');
 
     const nonce = await WKLAYPair.nonces(wallet.address);
-    const digest = await getApprovalDigest(
+    const digest = await getPermitSignature(
+      wallet,
       WKLAYPair,
+      31337,
       {
         owner: wallet.address,
         spender: router.address,
         value: expectedLiquidity.sub(MINIMUM_LIQUIDITY),
+        nonce,
+        deadline: constants.MaxUint256,
       },
-      nonce.toNumber(),
-      constants.MaxUint256,
-      31337,
     );
-    const signer = new ethers.Wallet(process.env.HH_PIVATE_KEY as string);
-    const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(signer.privateKey.slice(2), 'hex'));
+    const sig = ethers.utils.splitSignature(digest);
 
     await router.removeLiquidityKLAYWithPermit(
       WKLAYPartner.address,
@@ -473,9 +470,9 @@ describe('DexRouter', () => {
       wallet.address,
       constants.MaxUint256,
       false,
-      v,
-      r,
-      s,
+      sig.v,
+      sig.r,
+      sig.s,
     );
   });
 
@@ -721,7 +718,7 @@ describe('DexRouter', () => {
         },
       );
       const receipt = await tx.wait();
-      expect(receipt.gasUsed).to.eq(104286);
+      expect(receipt.gasUsed).to.eq(104356);
     }).retries(3);
   });
 
@@ -959,22 +956,19 @@ describe('DexRouter fee-on-transfer tokens', async () => {
     await addLiquidity(DTTAmount, KLAYAmount);
 
     const nonce = await pair.nonces(wallet.address);
-    const digest = await getApprovalDigest(
+    const digest = await getPermitSignature(
+      wallet,
       pair,
+      31337,
       {
         owner: wallet.address,
         spender: router.address,
         value: await pair.balanceOf(wallet.address),
+        nonce,
+        deadline: constants.MaxUint256,
       },
-      nonce,
-      constants.MaxUint256,
-      31337,
     );
-    const signer = new ethers.Wallet(process.env.HH_PIVATE_KEY as string);
-    const { v, r, s } = ecsign(
-      Buffer.from(digest.slice(2), 'hex'),
-      Buffer.from(signer.privateKey.slice(2), 'hex'),
-    );
+    const sig = ethers.utils.splitSignature(digest);
 
     const DTTInPair = await DTT.balanceOf(pair.address);
     const WKLAYInPair = await WKLAY.balanceOf(pair.address);
@@ -992,9 +986,9 @@ describe('DexRouter fee-on-transfer tokens', async () => {
       wallet.address,
       constants.MaxUint256,
       false,
-      v,
-      hexlify(r),
-      hexlify(s),
+      sig.v,
+      sig.r,
+      sig.s,
     );
   });
 

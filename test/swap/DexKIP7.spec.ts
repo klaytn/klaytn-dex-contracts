@@ -1,18 +1,14 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import * as dotenv from 'dotenv';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
-  keccak256, defaultAbiCoder, toUtf8Bytes, hexlify,
+  keccak256, toUtf8Bytes,
 } from 'ethers/lib/utils';
 import { constants } from 'ethers';
-import { ecsign } from 'ethereumjs-util';
-import { getApprovalDigest } from '../shared/utilities';
+import { getPermitSignature, getDomainSeparator } from '../shared/utilities';
 import { factoryFixture } from '../shared/fixtures';
 import { DexKIP7Test } from '../../typechain/mocks/DexKIP7Test';
 import { DexKIP7Test__factory } from '../../typechain/factories/mocks/DexKIP7Test__factory';
-
-dotenv.config();
 
 const TOTAL_SUPPLY = ethers.utils.parseEther('10000');
 const TEST_AMOUNT = ethers.utils.parseEther('10');
@@ -30,26 +26,14 @@ describe('DexKIP7', () => {
 
   it('name, symbol, decimals, totalSupply, balanceOf, DOMAIN_SEPARATOR, PERMIT_TYPEHASH', async () => {
     const name = await token.name();
+    const separator = getDomainSeparator(name, '1', 31337, token.address);
     expect(name).to.eq('DEXswap');
     expect(await token.symbol()).to.eq('KlayLP');
     expect(await token.decimals()).to.eq(18);
     expect(await token.totalSupply()).to.eq(TOTAL_SUPPLY);
     expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY);
     expect(await token.DOMAIN_SEPARATOR()).to.eq(
-      keccak256(
-        defaultAbiCoder.encode(
-          ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
-          [
-            keccak256(
-              toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
-            ),
-            keccak256(toUtf8Bytes(name)),
-            keccak256(toUtf8Bytes('1')),
-            31337,
-            token.address,
-          ],
-        ),
-      ),
+      separator,
     );
     expect(await token.PERMIT_TYPEHASH()).to.eq(
       keccak256(toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)')),
@@ -120,27 +104,26 @@ describe('DexKIP7', () => {
   it('permit', async () => {
     const nonce = await token.nonces(wallet.address);
     const deadline = constants.MaxUint256;
-    const digest = await getApprovalDigest(
+    const signature = await getPermitSignature(
+      wallet,
       token,
-      { owner: wallet.address, spender: other.address, value: TEST_AMOUNT },
-      nonce.toNumber(),
-      deadline,
       31337,
+      {
+        owner: wallet.address, spender: other.address, value: TEST_AMOUNT, nonce, deadline,
+      },
     );
-    const signer = new ethers.Wallet(process.env.HH_PIVATE_KEY as string);
-    const { v, r, s } = ecsign(
-      Buffer.from(digest.slice(2), 'hex'),
-      Buffer.from(signer.privateKey.slice(2), 'hex'),
+    const sigSplit = ethers.utils.splitSignature(
+      ethers.utils.arrayify(signature),
     );
-    // 0xFe22AB221aDD716D6CBB1a153E6f20B30F9cde69
+
     await expect(token.permit(
       wallet.address,
       other.address,
       TEST_AMOUNT,
       deadline,
-      v,
-      hexlify(r),
-      hexlify(s),
+      sigSplit.v,
+      sigSplit.r,
+      sigSplit.s,
     ))
       .to.emit(token, 'Approval')
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
@@ -151,55 +134,54 @@ describe('DexKIP7', () => {
   it('permit:fail expired', async () => {
     const nonce = await token.nonces(wallet.address);
     const blockNumBefore = await ethers.provider.getBlockNumber();
-    const deadline = (await ethers.provider.getBlock(blockNumBefore)).timestamp - 1;
-    const digest = await getApprovalDigest(
+    const deadline = ethers.BigNumber.from((
+      await ethers.provider.getBlock(blockNumBefore)).timestamp - 1);
+    const signature = await getPermitSignature(
+      wallet,
       token,
-      { owner: wallet.address, spender: other.address, value: TEST_AMOUNT },
-      nonce.toNumber(),
-      deadline,
       31337,
+      {
+        owner: wallet.address, spender: other.address, value: TEST_AMOUNT, nonce, deadline,
+      },
     );
-    const signer = new ethers.Wallet(process.env.HH_PIVATE_KEY as string);
-    const { v, r, s } = ecsign(
-      Buffer.from(digest.slice(2), 'hex'),
-      Buffer.from(signer.privateKey.slice(2), 'hex'),
+    const sigSplit = ethers.utils.splitSignature(
+      ethers.utils.arrayify(signature),
     );
-    // 0xFe22AB221aDD716D6CBB1a153E6f20B30F9cde69
+
     await expect(token.permit(
       wallet.address,
       other.address,
       TEST_AMOUNT,
       deadline,
-      v,
-      hexlify(r),
-      hexlify(s),
+      sigSplit.v,
+      sigSplit.r,
+      sigSplit.s,
     )).to.be.revertedWith('DEX: EXPIRED');
   });
 
   it('permit:fail invalid signature', async () => {
     const nonce = await token.nonces(wallet.address);
     const deadline = constants.MaxUint256;
-    const digest = await getApprovalDigest(
+    const signature = await getPermitSignature(
+      wallet,
       token,
-      { owner: wallet.address, spender: other.address, value: TEST_AMOUNT },
-      nonce.toNumber(),
-      deadline,
       31335,
+      {
+        owner: wallet.address, spender: other.address, value: TEST_AMOUNT, nonce, deadline,
+      },
     );
-    const signer = new ethers.Wallet(process.env.HH_PIVATE_KEY as string);
-    const { v, r, s } = ecsign(
-      Buffer.from(digest.slice(2), 'hex'),
-      Buffer.from(signer.privateKey.slice(2), 'hex'),
+    const sigSplit = ethers.utils.splitSignature(
+      ethers.utils.arrayify(signature),
     );
-    // 0xFe22AB221aDD716D6CBB1a153E6f20B30F9cde69
+
     await expect(token.permit(
       wallet.address,
       other.address,
       TEST_AMOUNT,
       deadline,
-      v,
-      hexlify(r),
-      hexlify(s),
+      sigSplit.v,
+      sigSplit.r,
+      sigSplit.s,
     )).to.be.revertedWith('DEX: INVALID_SIGNATURE');
   });
 });

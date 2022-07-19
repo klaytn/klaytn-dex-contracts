@@ -1,28 +1,9 @@
 import { Contract, BigNumber } from 'ethers';
 import {
-  keccak256, defaultAbiCoder, toUtf8Bytes, solidityPack, getAddress,
+  keccak256, solidityPack, getAddress,
 } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
-import { Operation, BatchOperation } from './interfaces';
-
-const PERMIT_TYPEHASH = keccak256(
-  toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'),
-);
-
-export function getDomainSeparator(name: string, tokenAddress: string, chainId: number) : string {
-  return keccak256(
-    defaultAbiCoder.encode(
-      ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
-      [
-        keccak256(toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')),
-        keccak256(toUtf8Bytes(name)),
-        keccak256(toUtf8Bytes('1')),
-        chainId,
-        tokenAddress,
-      ],
-    ),
-  );
-}
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export function getCreate2Address(
   factoryAddress: string,
@@ -40,35 +21,76 @@ export function getCreate2Address(
   return getAddress(`0x${keccak256(sanitizedInputs).slice(-40)}`);
 }
 
-export async function getApprovalDigest(
+export function getDomainSeparator(
+  name: string,
+  version: string,
+  chainId: number,
+  verifyingContract: string,
+): string {
+  // eslint-disable-next-line no-underscore-dangle
+  const separator = ethers.utils._TypedDataEncoder.hashDomain({
+    name,
+    version,
+    chainId,
+    verifyingContract,
+  });
+  return separator;
+}
+
+export async function getPermitSignature(
+  wallet: SignerWithAddress,
   token: Contract,
-  approve: {
+  chainId: number,
+  Permit: {
     owner: string
     spender: string
-    value: any
+    value: BigNumber
+    nonce: BigNumber,
+    deadline: BigNumber,
   },
-  nonce: number,
-  deadline: any,
-  chainId: number,
 ): Promise<string> {
   const name = await token.name();
-  const DOMAIN_SEPARATOR = getDomainSeparator(name, token.address, chainId);
-  return keccak256(
-    solidityPack(
-      ['bytes1', 'bytes1', 'bytes32', 'bytes32'],
-      [
-        '0x19',
-        '0x01',
-        DOMAIN_SEPARATOR,
-        keccak256(
-          defaultAbiCoder.encode(
-            ['bytes32', 'address', 'address', 'uint256', 'uint256', 'uint256'],
-            [PERMIT_TYPEHASH, approve.owner, approve.spender, approve.value, nonce, deadline],
-          ),
-        ),
+  // eslint-disable-next-line no-underscore-dangle
+  const signature = await wallet._signTypedData(
+    {
+      name,
+      version: '1',
+      chainId,
+      verifyingContract: token.address,
+    },
+    {
+      Permit: [
+        {
+          name: 'owner',
+          type: 'address',
+        },
+        {
+          name: 'spender',
+          type: 'address',
+        },
+        {
+          name: 'value',
+          type: 'uint256',
+        },
+        {
+          name: 'nonce',
+          type: 'uint256',
+        },
+        {
+          name: 'deadline',
+          type: 'uint256',
+        },
       ],
-    ),
+    },
+    {
+      owner: Permit.owner,
+      spender: Permit.spender,
+      value: Permit.value,
+      nonce: Permit.nonce,
+      deadline: Permit.deadline,
+    },
   );
+  return signature;
 }
 
 export async function mineBlock(timestamp: number): Promise<void> {
@@ -82,54 +104,4 @@ export function encodePrice(reserve0: BigNumber, reserve1: BigNumber) : BigNumbe
     reserve1.mul(BigNumber.from('2').pow(112)).div(reserve0),
     reserve0.mul(BigNumber.from('2').pow(112)).div(reserve1),
   ];
-}
-
-export function genOperation(
-  target: string,
-  value: string | number,
-  data: string,
-  predecessor: string,
-  salt: string,
-) : Operation {
-  const id = ethers.utils.keccak256(defaultAbiCoder.encode([
-    'address',
-    'uint256',
-    'bytes',
-    'uint256',
-    'bytes32',
-  ], [
-    target,
-    value,
-    data,
-    predecessor,
-    salt,
-  ]));
-  return {
-    id, target, value, data, predecessor, salt,
-  };
-}
-
-export function genOperationBatch(
-  targets: string[],
-  values: string[] | number[],
-  datas: string[],
-  predecessor: string,
-  salt: string,
-) : BatchOperation {
-  const id = ethers.utils.keccak256(defaultAbiCoder.encode([
-    'address[]',
-    'uint256[]',
-    'bytes[]',
-    'uint256',
-    'bytes32',
-  ], [
-    targets,
-    values,
-    datas,
-    predecessor,
-    salt,
-  ]));
-  return {
-    id, targets, values, datas, predecessor, salt,
-  };
 }

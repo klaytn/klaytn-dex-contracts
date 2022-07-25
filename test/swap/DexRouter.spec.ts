@@ -182,6 +182,30 @@ describe('DexRouter', () => {
     expect(await pair.balanceOf(wallet.address)).to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY));
   });
 
+  it('addLiquidityNonExistedPool', async () => {
+    const token2 = await (await ethers.getContractFactory('KIP7Mock')).deploy(ethers.utils.parseEther('400'));
+    const token0Amount = ethers.utils.parseEther('1');
+    const token2Amount = ethers.utils.parseEther('4');
+
+    await token0.approve(router.address, constants.MaxUint256);
+    await token2.approve(router.address, constants.MaxUint256);
+    await expect(
+      router.addLiquidity(
+        token0.address,
+        token2.address,
+        token0Amount,
+        token2Amount,
+        0,
+        0,
+        wallet.address,
+        constants.MaxUint256,
+      ),
+    )
+      .to.emit(token0, 'Transfer')
+      .to.emit(token2, 'Transfer')
+      .to.emit(factory, 'PairCreated');
+  });
+
   it('addLiquidity:fail', async () => {
     const token0Amount = ethers.utils.parseEther('1');
     const token1Amount = ethers.utils.parseEther('4');
@@ -274,6 +298,20 @@ describe('DexRouter', () => {
 
     expect(await WKLAYPair.balanceOf(wallet.address))
       .to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY));
+
+    const KlayBalance = await ethers.provider.getBalance(wallet.address);
+    await router.addLiquidityKLAY(
+      WKLAYPartner.address,
+      WKLAYPartnerAmount,
+      WKLAYPartnerAmount,
+      KLAYAmount,
+      wallet.address,
+      constants.MaxUint256,
+      { value: KlayBalance.div(2) },
+    );
+    // extra value gets refunded
+    expect(await ethers.provider.getBalance(wallet.address))
+      .to.be.approximately(KlayBalance.sub(KLAYAmount), ethers.utils.parseEther('0.002'));
   });
 
   it('removeLiquidity', async () => {
@@ -590,6 +628,43 @@ describe('DexRouter', () => {
           constants.MaxUint256,
           {
             value: expectedSwapAmount,
+          },
+        ),
+      )
+        .to.emit(WKLAY, 'Transfer')
+        .withArgs(router.address, WKLAYPair.address, expectedSwapAmount)
+        .to.emit(WKLAYPartner, 'Transfer')
+        .withArgs(WKLAYPair.address, wallet.address, outputAmount)
+        .to.emit(WKLAYPair, 'Sync')
+        .withArgs(
+          WKLAYPairToken0 === WKLAYPartner.address
+            ? WKLAYPartnerAmount.sub(outputAmount)
+            : KLAYAmount.add(expectedSwapAmount),
+          WKLAYPairToken0 === WKLAYPartner.address
+            ? KLAYAmount.add(expectedSwapAmount)
+            : WKLAYPartnerAmount.sub(outputAmount),
+        )
+        .to.emit(WKLAYPair, 'Swap')
+        .withArgs(
+          router.address,
+          WKLAYPairToken0 === WKLAYPartner.address ? 0 : expectedSwapAmount,
+          WKLAYPairToken0 === WKLAYPartner.address ? expectedSwapAmount : 0,
+          WKLAYPairToken0 === WKLAYPartner.address ? outputAmount : 0,
+          WKLAYPairToken0 === WKLAYPartner.address ? 0 : outputAmount,
+          wallet.address,
+        );
+    });
+
+    it('happy path with extra KLAY', async () => {
+      const WKLAYPairToken0 = await WKLAYPair.token0();
+      await expect(
+        router.swapKLAYForExactTokens(
+          outputAmount,
+          [WKLAY.address, WKLAYPartner.address],
+          wallet.address,
+          constants.MaxUint256,
+          {
+            value: expectedSwapAmount.mul(50),
           },
         ),
       )

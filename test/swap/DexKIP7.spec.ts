@@ -47,6 +47,13 @@ describe('DexKIP7', () => {
     expect(await token.allowance(wallet.address, other.address)).to.eq(TEST_AMOUNT);
   });
 
+  it('supportInterface', async () => {
+    // KIP-13 Identifiers can be found https://kips.klaytn.foundation/KIPs/kip-7
+    expect(await token.supportsInterface('0x65787371')).to.eq(true); // 0x65787371 is IKIP7 interfaceID
+    expect(await token.supportsInterface('0xa219a025')).to.eq(true); // 0xa219a025 is IKIP7Metadata interfaceID
+    expect(await token.supportsInterface('0x9d188c22')).to.eq(false); // 0x9d188c22 is IKIP7TokenReceiver interfaceID
+  });
+
   it('transfer', async () => {
     await expect(token.transfer(other.address, TEST_AMOUNT))
       .to.emit(token, 'Transfer')
@@ -92,6 +99,16 @@ describe('DexKIP7', () => {
     expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
   });
 
+  it('safeTransferFrom:max', async () => {
+    await token.approve(other.address, constants.MaxUint256);
+    await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, other.address, TEST_AMOUNT))
+      .to.emit(token, 'Transfer')
+      .withArgs(wallet.address, other.address, TEST_AMOUNT);
+    expect(await token.allowance(wallet.address, other.address)).to.eq(constants.MaxUint256);
+    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT));
+    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
+  });
+
   it('safeTransferFrom:fail', async () => {
     await expect(token['safeTransferFrom(address,address,uint256)'](wallet.address, other.address, TEST_AMOUNT))
       .to.be.revertedWith('KIP7: insufficient allowance');
@@ -99,6 +116,9 @@ describe('DexKIP7', () => {
       .to.be.revertedWith('KIP7: transfer from the zero address');
     await expect(token['safeTransferFrom(address,address,uint256)'](wallet.address, constants.AddressZero, TEST_AMOUNT))
       .to.be.revertedWith('KIP7: transfer to the zero address');
+    await token.approve(other.address, constants.MaxUint256);
+    await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, token.address, TEST_AMOUNT))
+      .to.be.rejectedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
   });
 
   it('permit', async () => {

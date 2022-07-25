@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.12;
 
-// helper methods for interacting with ERC20 tokens and sending KLAY that do not consistently return true/false
+// helper methods for interacting with ERC20/KIP7 tokens and sending KLAY that do not consistently return true/false
 library TransferHelper {
     function safeApprove(address token, address to, uint value) internal {
         // bytes4(keccak256(bytes('approve(address,uint256)')));

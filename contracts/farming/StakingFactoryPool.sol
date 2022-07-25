@@ -216,7 +216,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Stop rewards
+     * @notice Transfers reward tokens from the contract to the specified address
      * @dev Only callable by multisig contract. Needs to be for emergency.
      * @param _amount: Amount of reward tokens to transfer
      * @param _recipient: A wallet's address to trasfer tokens to
@@ -229,7 +229,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
      * @notice Allows the multisig contract to recover tokens sent to the contract by mistake
      * @param _token: Recoverable token address
      * @param _recipient: A wallet's address to trasfer tokens to
-     * @dev Callable by owner
+     * @dev Callable by multisig contract
      */
     function recoverToken(address _token, address _recipient) external onlyOwner {
         require(
@@ -294,7 +294,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice It allows the admin to update start and end blocks
+     * @notice It allows the multisig contract to update start and end blocks
      * @dev This function is only callable by multisig contract.
      * @param _startBlock: the new start block
      * @param _rewardEndBlock: the new end block

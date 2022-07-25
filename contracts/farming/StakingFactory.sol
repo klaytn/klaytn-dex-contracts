@@ -15,7 +15,7 @@ contract StakingFactory is Ownable {
 
     /**
      * @notice Deploy new staking pool contract
-     * @dev Can only be called by the multisig contract
+     * @dev Should only be called by the multisig contract
      * @param _stakedToken staked token address
      * @param _rewardToken reward token address
      * @param _rewardPerBlock reward per block (in rewardToken)

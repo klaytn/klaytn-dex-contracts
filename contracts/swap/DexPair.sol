@@ -14,8 +14,6 @@ contract DexPair is IDexPair, DexKIP7 {
     using UQ112x112 for uint224;
 
     uint256 public constant MINIMUM_LIQUIDITY = 10**3;
-    // bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
-
     /// @notice Returns the factory address.
     address public immutable factory;
     /// @notice Returns the address of the pair token with the lower sort order.
@@ -58,6 +56,13 @@ contract DexPair is IDexPair, DexKIP7 {
         _blockTimestampLast = blockTimestampLast;
     }
 
+    /**
+    * @notice Transfers tokens from msg.sender to a recipient
+    * @dev Calls transfer on token contract via low-level call by transfer function selector (0xa9059cbb) 
+    * @param token The contract address of the token which will be transferred
+    * @param to The address of the recipient
+    * @param value The amount of tokens to be transferred
+    */
     function _safeTransfer(
         address token,
         address to,
@@ -134,9 +139,10 @@ contract DexPair is IDexPair, DexKIP7 {
     }
 
     /** 
-    * @notice Creates pool tokens.
+    * @notice Creates pool LP tokens.
     * Emits `Mint`, `Sync`, `Transfer` events.
     * @dev this low-level function should be called from a contract which performs important safety checks
+    * @param to Address of LP tokens recipient.
     */ 
     function mint(address to) external lock returns (uint256 liquidity) {
         (uint112 _reserve0, uint112 _reserve1, ) = getReserves(); // gas savings
@@ -162,9 +168,10 @@ contract DexPair is IDexPair, DexKIP7 {
     }
 
     /** 
-    * @notice Destroys pool tokens.
+    * @notice Destroys pool LP tokens.
     * Emits `Burn`, `Sync`, `Transfer` events.
     * @dev this low-level function should be called from a contract which performs important safety checks
+    * @param to token0 and token1 recipient address after LP tokens are destroyed
     */ 
     function burn(address to) external lock returns (uint256 amount0, uint256 amount1) {
         (uint112 _reserve0, uint112 _reserve1, ) = getReserves(); // gas savings

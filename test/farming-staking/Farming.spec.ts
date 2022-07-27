@@ -75,13 +75,13 @@ describe('Farming', () => {
     const lp25 = await lpFactory.deploy(ethers.utils.parseEther('1000000'));
     const lp26 = await lpFactory.deploy(ethers.utils.parseEther('1000000'));
     const lp27 = await lpFactory.deploy(ethers.utils.parseEther('1000000'));
-    await farming.add('2000', lp1.address, true, 1, '10000');
-    await farming.add('1000', lp2.address, true, 1, '10000');
-    await farming.add('500', lp3.address, true, 1, '10000');
-    await farming.add('500', lp4.address, true, 1, '10000');
-    await farming.add('500', lp5.address, true, 1, '10000');
-    await farming.add('500', lp6.address, true, 1, '10000');
-    await farming.add('500', lp7.address, true, 1, '10000');
+    await farming.add('2000', lp1.address, true, 1, blockNumber + 10000);
+    await farming.add('1000', lp2.address, true, 1, blockNumber + 10000);
+    await farming.add('500', lp3.address, true, 1, blockNumber + 10000);
+    await farming.add('500', lp4.address, true, 1, blockNumber + 10000);
+    await farming.add('500', lp5.address, true, 1, blockNumber + 10000);
+    await farming.add('500', lp6.address, true, 1, blockNumber + 10000);
+    await farming.add('500', lp7.address, true, 1, blockNumber + 10000);
     await farming.add('100', lp8.address, true, 1, '10000');
     await farming.add('100', lp9.address, true, 1, '10000');
     await farming.add('2000', lp10.address, true, 1, '10000');
@@ -97,11 +97,11 @@ describe('Farming', () => {
     await farming.add('1000', lp20.address, true, 1, '10000');
     await farming.add('500', lp21.address, true, 1, '10000');
     await farming.add('500', lp22.address, true, 1, '10000');
-    await farming.add('500', lp23.address, true, 1, '10000');
-    await farming.add('500', lp24.address, true, 1, '10000');
-    await farming.add('500', lp25.address, true, 1, '10000');
-    await farming.add('100', lp26.address, true, 1, '10000');
-    await farming.add('100', lp27.address, true, 1, '10000');
+    await farming.add('500', lp23.address, true, 1, blockNumber + 10000);
+    await farming.add('500', lp24.address, true, 1, blockNumber + 10000);
+    await farming.add('500', lp25.address, true, 1, blockNumber + 10000);
+    await farming.add('100', lp26.address, true, 1, blockNumber + 10000);
+    await farming.add('100', lp27.address, true, 1, blockNumber + 10000);
     expect(await farming.poolLength()).to.be.equal(27);
 
     await expect(farming.add('100', lp2.address, false, 1, '10000'))
@@ -116,9 +116,9 @@ describe('Farming', () => {
   });
 
   it('deposit/withdraw', async () => {
-    await farming.add(1000, lp1.address, true, 1, '10000');
-    await farming.add(1000, lp2.address, true, 1, '10000');
-    await farming.add(1000, lp3.address, true, 1, '10000');
+    await farming.add(1000, lp1.address, true, 1, blockNumber + 10000);
+    await farming.add(1000, lp2.address, true, 1, blockNumber + 10000);
+    await farming.add(1000, lp3.address, true, 1, blockNumber + 10000);
 
     await lp1.connect(alice).approve(farming.address, '100');
     await farming.connect(alice).deposit(0, '20');
@@ -141,7 +141,7 @@ describe('Farming', () => {
   });
 
   it('deposit/withdraw:fail', async () => {
-    await farming.add(1000, lp1.address, true, 1, '10000');
+    await farming.add(1000, lp1.address, true, 1, blockNumber + 10000);
     await lp1.connect(alice).approve(farming.address, '100');
 
     await farming.connect(alice).deposit(0, '20');
@@ -152,9 +152,9 @@ describe('Farming', () => {
   });
 
   it('update multiplier', async () => {
-    await farming.add('1000', lp1.address, true, 2, '10000');
-    await farming.add('1000', lp2.address, true, 2, '10000');
-    await farming.add('1000', lp3.address, true, 2, '10000');
+    await farming.add('1000', lp1.address, true, 2, blockNumber + 10000);
+    await farming.add('1000', lp2.address, true, 2, blockNumber + 10000);
+    await farming.add('1000', lp3.address, true, 2, blockNumber + 10000);
 
     await mineUpTo(blockNumber + 400);
 

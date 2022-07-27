@@ -277,7 +277,9 @@ contract DexRouter is IDexRouter {
         IWKLAY(WKLAY).withdraw(amountKLAY);
         TransferHelper.safeTransferKLAY(to, amountKLAY);
     }
-
+    /**
+    * @dev Removes liquidity from an ERC20⇄ERC20/KIP7⇄KIP7/KIP7⇄ERC20 pool without pre-approval. 
+    */
     function removeLiquidityWithPermit(
         address tokenA,
         address tokenB,
@@ -312,7 +314,9 @@ contract DexRouter is IDexRouter {
             deadline
         );
     }
-
+    /**
+    * @dev Removes liquidity from an ERC20⇄WKLAY/KIP7⇄WKLAY pool and receive KLAY without pre-approval 
+    */
     function removeLiquidityKLAYWithPermit(
         address token,
         uint256 liquidity,
@@ -352,6 +356,11 @@ contract DexRouter is IDexRouter {
     }
 
     // **** REMOVE LIQUIDITY (supporting fee-on-transfer tokens) ****
+
+    /**
+    * @dev Identical to removeLiquidityKLAY, but succeeds for tokens that take a fee on transfer.
+    * msg.sender should have already given the router an allowance of at least liquidity on the pool. 
+    */
     function removeLiquidityKLAYSupportingFeeOnTransferTokens(
         address token,
         uint256 liquidity,
@@ -378,6 +387,9 @@ contract DexRouter is IDexRouter {
         TransferHelper.safeTransferKLAY(to, amountKLAY);
     }
 
+    /**
+    * @dev Identical to removeLiquidityKLAYWithPermit, but succeeds for tokens that take a fee on transfer. 
+    */
     function removeLiquidityKLAYWithPermitSupportingFeeOnTransferTokens(
         address token,
         uint256 liquidity,
@@ -790,6 +802,12 @@ contract DexRouter is IDexRouter {
     }
 
     // **** LIBRARY FUNCTIONS ****
+
+    /**
+     * @dev Given some asset amount and reserves, returns an amount of the 
+     * other asset representing equivalent value.
+     * Useful for calculating optimal token amounts before calling mint.
+     */
     function quote(
         uint256 amountA,
         uint256 reserveA,
@@ -798,6 +816,11 @@ contract DexRouter is IDexRouter {
         return DexLibrary.quote(amountA, reserveA, reserveB);
     }
 
+    /**
+    * @dev Given an input asset amount, returns the maximum output amount 
+    * of the other asset (accounting for fees) given reserves.
+    * Used in getAmountsOut.
+    */
     function getAmountOut(
         uint256 amountIn,
         uint256 reserveIn,
@@ -806,6 +829,11 @@ contract DexRouter is IDexRouter {
         return DexLibrary.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
+    /**
+    * @dev Returns the minimum input asset amount required to buy the given 
+    * output asset amount (accounting for fees) given reserves.
+    * Used in getAmountsIn. 
+    */
     function getAmountIn(
         uint256 amountOut,
         uint256 reserveIn,

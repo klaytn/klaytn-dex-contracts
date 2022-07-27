@@ -54,11 +54,11 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    hardhat: {
-      forking: {
-        url: 'https://cypress.fandom.finance/archive',
-      },
-    },
+    // hardhat: {
+    //   forking: {
+    //     url: 'https://cypress.fandom.finance/archive',
+    //   },
+    // },
     baobab: {
       url: 'https://api.baobab.klaytn.net:8651/',
       accounts: { mnemonic, initialIndex: 0 },

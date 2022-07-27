@@ -1,4 +1,9 @@
 // SPDX-License-Identifier: MIT
+/// Copied and modified from https://github.com/makerdao/multicall/blob/master/src/Multicall2.sol
+/// @title Multicall2 - Aggregate results from multiple read-only function calls
+/// @author Michael Elliot <mike@makerdao.com>
+/// @author Joshua Levine <joshua@makerdao.com>
+/// @author Nick Johnson <arachnid@notdot.net>
 
 pragma solidity =0.8.12;
 
@@ -78,7 +83,7 @@ contract Multicall {
         timestamp = block.timestamp;
     }
 
-    function getEthBalance(address addr) public view returns (uint256 balance) {
+    function getKlayBalance(address addr) public view returns (uint256 balance) {
         balance = addr.balance;
     }
 

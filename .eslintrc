@@ -9,7 +9,7 @@
   "extends": [
     "airbnb-base",
     "airbnb-typescript/base",
-    "plugin:node/recommended",
+    "plugin:node/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -24,9 +24,9 @@
     "@typescript-eslint/no-unused-expressions": "off",
     "no-console": "off",
     "node/no-missing-import": "off",
-    "camelcase": "off"
+    "camelcase": "off",
+    "import/no-extraneous-dependencies": "off"
     // "import/extensions": "off",
-    // "import/no-extraneous-dependencies": "off",
     // "import/no-unresolved": "off",
     
   }

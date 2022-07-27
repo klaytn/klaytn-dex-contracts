@@ -22,9 +22,9 @@ async function main() {
   const factoryInstance = await factory.deploy(deployer);
   await factoryInstance.deployed();
 
-  console.log(`Factory deployed to : ${factoryInstance.address}`);
+  console.log(`Dex Factory deployed to : ${factoryInstance.address}`);
 
-  // Deploy Router passing Factory Address and WETH Address
+  // Deploy Dex Router passing Factory Address and WETH Address
   const router = await ethers.getContractFactory('DexRouter');
   const routerInstance = await router.deploy(
     factoryInstance.address,
@@ -32,7 +32,7 @@ async function main() {
   );
   await routerInstance.deployed();
 
-  console.log(`Router deployed to :  ${routerInstance.address}`);
+  console.log(`Dex Router deployed to :  ${routerInstance.address}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

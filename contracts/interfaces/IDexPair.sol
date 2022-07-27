@@ -5,8 +5,11 @@ pragma solidity ^0.8.0;
 
 interface IDexPair is IDexKIP7 {
 
+    /// @dev Emitted each time liquidity tokens are created via `mint` function.
     event Mint(address indexed sender, uint amount0, uint amount1);
+    /// @dev Emitted each time liquidity tokens are destroyed via `burn` function.
     event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    /// @dev Emitted each time a swap occurs via `swap` operation.
     event Swap(
         address indexed sender,
         uint amount0In,
@@ -15,6 +18,7 @@ interface IDexPair is IDexKIP7 {
         uint amount1Out,
         address indexed to
     );
+    /// Emitted each time reserves are updated via `mint`, `burn`, `swap`, or `sync` functions.
     event Sync(uint112 reserve0, uint112 reserve1);
 
     function MINIMUM_LIQUIDITY() external pure returns (uint);

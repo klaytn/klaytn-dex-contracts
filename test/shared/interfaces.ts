@@ -24,21 +24,3 @@ export interface RouterFixture {
   pair: DexPair
   WKLAYPair: DexPair
 }
-
-export interface Operation {
-  id: string
-  target: string
-  value: string | number
-  data: string;
-  predecessor: string
-  salt: string
-}
-
-export interface BatchOperation {
-  id: string
-  targets: string[]
-  values: string[] | number[]
-  datas: string[];
-  predecessor: string
-  salt: string
-}

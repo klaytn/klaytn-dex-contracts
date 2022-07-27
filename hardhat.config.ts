@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import '@nomiclabs/hardhat-ethers';
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomiclabs/hardhat-etherscan';
-import '@nomiclabs/hardhat-waffle';
+import '@nomicfoundation/hardhat-chai-matchers';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
@@ -42,15 +42,6 @@ const config: HardhatUserConfig = {
           },
         },
       },
-      'contracts/governance/Timelock.sol': {
-        version: '0.6.12',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
       'contracts/utils/SafeMath.sol': {
         version: '0.6.12',
         settings: {
@@ -65,7 +56,7 @@ const config: HardhatUserConfig = {
   networks: {
     // hardhat: {
     //   forking: {
-    //     url: 'https://baobab.fandom.finance/archive',
+    //     url: 'https://cypress.fandom.finance/archive',
     //   },
     // },
     baobab: {

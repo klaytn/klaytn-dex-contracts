@@ -91,7 +91,8 @@ contract Farming is Ownable, ReentrancyGuard {
         _transferOwnership(_multisig);
     }
 
-    /** @dev Update reward multiplier for `_pid` pool.
+    /** 
+     * @dev Update reward multiplier for `_pid` pool.
      * @param _pid The id of the pool. See `poolInfo`.
      * @param _multiplier The new pool rewards multiplier.
      */
@@ -112,7 +113,8 @@ contract Farming is Ownable, ReentrancyGuard {
         emit UpdateRewardPerBlock(_ptnPerBlock);
     }
 
-    /** @dev Returns reward multiplier over the given `_from` to `_to` block for `_pid` pool.
+    /** 
+     * @dev Returns reward multiplier over the given `_from` to `_to` block for `_pid` pool.
      * @param _pid The id of the pool. See `poolInfo`.
      * @param _from Start block number
      * @param _to End block number
@@ -139,7 +141,8 @@ contract Farming is Ownable, ReentrancyGuard {
         return poolInfo.length;
     }
 
-    /** @notice Adds a new LP farming pool.
+    /**
+     * @notice Adds a new LP farming pool.
      * @dev Can only be called by the multisig contract.
      * @param _allocPoint Number of allocation points for the new pool.
      * @param _lpToken Address of the LP KIP7 token.
@@ -183,7 +186,8 @@ contract Farming is Ownable, ReentrancyGuard {
         );
     }
 
-    /** @notice Update the given pool's PTN allocation point.
+    /** 
+     * @notice Update the given pool's PTN allocation point.
      * @dev Can only be called by the multisig contract.
      * @param _pid The id of the pool. See `poolInfo`.
      * @param _allocPoint New number of allocation points for the pool.
@@ -214,7 +218,8 @@ contract Farming is Ownable, ReentrancyGuard {
         }
     }
 
-    /** @notice Update reward variables for the given pool.
+    /** 
+     * @notice Update reward variables for the given pool.
      * @param _pid The id of the pool. See `poolInfo`.
      */
     function updatePool(uint256 _pid) public {
@@ -245,7 +250,8 @@ contract Farming is Ownable, ReentrancyGuard {
         }
     }
 
-    /** @notice Deposit LP tokens to the `_pid` pool.
+    /** 
+     * @notice Deposit LP tokens to the `_pid` pool.
      * @param _pid The id of the pool. See `poolInfo`.
      * @param _amount Amount of LP tokens to deposit.
      */
@@ -274,7 +280,8 @@ contract Farming is Ownable, ReentrancyGuard {
         emit Deposit(msg.sender, _pid, _amount);
     }
 
-    /** @notice Withdraw LP tokens from the `_pid` pool.
+    /** 
+     * @notice Withdraw LP tokens from the `_pid` pool.
      * @param _pid The id of the pool. See `poolInfo`.
      * @param _amount Amount of LP tokens to withdraw.
      */
@@ -298,7 +305,8 @@ contract Farming is Ownable, ReentrancyGuard {
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
-    /** @dev Safe PTN transfer function, just in case if rounding error causes pool to not have enough PTNs.
+    /** 
+     * @dev Safe PTN transfer function, just in case if rounding error causes pool to not have enough PTNs.
      * @param _to The PTN receiver address.
      * @param _amount of PTN to transfer.
      */
@@ -311,7 +319,8 @@ contract Farming is Ownable, ReentrancyGuard {
         }
     }
 
-    /** @dev Withdraw without caring about the rewards. EMERGENCY ONLY.
+    /** 
+    * @dev Withdraw without caring about the rewards. EMERGENCY ONLY.
     * @param _pid The id of the pool. See `poolInfo`.
     */
     function emergencyWithdraw(uint256 _pid) public nonReentrant {
@@ -327,7 +336,8 @@ contract Farming is Ownable, ReentrancyGuard {
         emit EmergencyWithdraw(msg.sender, _pid, oldUserAmount);
     }
 
-    /** @dev View function for checking pending PTN rewards.
+    /** 
+    * @dev View function for checking pending PTN rewards.
     * @param _pid The id of the pool. See `poolInfo`.
     * @param _user Address of the user.
     */

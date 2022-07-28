@@ -132,6 +132,16 @@ contract DexKIP7 is IDexKIP7, KIP13 {
         emit Transfer(from, to, amount);
     }
 
+    /**
+     * @dev See {IKIP7-approve}.
+     *
+     * NOTE: If `amount` is the maximum `uint256`, the allowance is not updated on
+     * `transferFrom`. This is semantically equivalent to an infinite approval.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
     function approve(address spender, uint amount) external returns (bool) {
         _approve(msg.sender, spender, amount);
         return true;
@@ -192,6 +202,28 @@ contract DexKIP7 is IDexKIP7, KIP13 {
         require(_checkOnKIP7Received(sender, recipient, amount, data), "KIP7: transfer to non KIP7Receiver implementer");
     }
 
+    /**
+     * @dev See {IKIP7Permit-permit}.
+     * Sets `value` as the allowance of `spender` over ``owner``'s tokens,
+     * given ``owner``'s signed approval.
+     *
+     * IMPORTANT: The same issues {IKIP7-approve} has related to transaction
+     * ordering also apply here.
+     *
+     * Emits an {Approval} event.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     * - `deadline` must be a timestamp in the future.
+     * - `v`, `r` and `s` must be a valid `secp256k1` signature from `owner`
+     * over the EIP712-formatted function arguments.
+     * - the signature must use ``owner``'s current nonce (see {nonces}).
+     *
+     * For more information on the signature format, see the
+     * https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP
+     * section].
+     */
     function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
         require(deadline >= block.timestamp, 'DEX: EXPIRED');
         bytes32 digest = keccak256(

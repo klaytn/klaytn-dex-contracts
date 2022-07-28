@@ -201,6 +201,12 @@ contract DexPair is IDexPair, DexKIP7 {
     * @notice Swaps tokens. For regular swaps, data.length must be 0.
     * @dev this low-level function should be called from a contract which performs important safety checks
     * Emits Swap, Sync events.
+    * @param amount0Out Amount of token0 to be sent to the `to` recipient.
+    * @param amount1Out Amount of token1 to be sent to the `to` recipient.
+    * @param to Address of tokens recipient. If data.length is greater than 0, the contract transfers the 
+    * tokens and then calls the `uniswapV2Call` callback function on the `to` address
+    * @param data Arbitary length data to be passed to the `uniswapV2Call` callback function. Used in case 
+    * of flash swap.
     */ 
     function swap(
         uint256 amount0Out,

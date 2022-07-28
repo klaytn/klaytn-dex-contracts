@@ -250,8 +250,10 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Stop rewards
-     * @dev Only callable by the multisig contract
+     * @notice Stop pool rewards.
+     * @dev Only callable by the multisig contract. Should be called only in emergency situations.
+     * Sets the pool's reward-end block to the current block. This will effect the result of `_getMultiplier`
+     * function called with the next `_updatePool`, and the pool rewards will be no longer updated.
      */
     function stopReward() external onlyOwner {
         pool.rewardEndBlock = (block.number).toUint64();
@@ -351,6 +353,8 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
 
     /**
      * @notice Update reward variables of the given pool to be up-to-date.
+     * @dev If the current block number is higher than the reward-end block,
+     * the pool rewads are no longer updated (stopped).
      */
     function _updatePool() internal {
         if (block.number > pool.lastRewardBlock) {
@@ -377,6 +381,8 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
 
     /**
      * @notice Return reward multiplier over the given `_from` to `_to` block.
+     * If the `from` block is higher than the pool's reward-end block,  
+     * the function returns 0 and therefore rewards are no longer updated.
      * @param _from: block to start
      * @param _to: block to finish
      */

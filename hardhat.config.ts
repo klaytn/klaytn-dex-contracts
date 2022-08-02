@@ -11,9 +11,15 @@ dotenv.config();
 
 let mnemonic: string;
 if (!process.env.MNEMONIC) {
-  throw new Error('Please set your MNEMONIC in a .env file');
+  throw new Error('Please, set up your MNEMONIC in a .env file');
 } else {
   mnemonic = process.env.MNEMONIC;
+}
+
+if (!process.env.FORKING) {
+  throw new Error('Please, set up the FORKING parameter in a .env file');
+} else if (process.env.FORKING === 'true' && !process.env.FORKING_URL) {
+  throw new Error('Please, provide FORKING_URL parameter in a .env file');
 }
 
 // You need to export an object to set up your config

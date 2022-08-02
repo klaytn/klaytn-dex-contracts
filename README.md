@@ -23,7 +23,7 @@ npx hardhat run scripts/deployDEX.ts
 ```
 
 ## Tests
-Before running tests, please, provide your MNEMONIC in a .env file.
+Before running tests, please, provide the following parameters in a .env file: `MNEMONIC`, `FORKING`(true/false) and `FORKING_URL` (in case of `FORKING` is true).
 To run all unit tests, please run 
 ```bash 
 npx hardhat test

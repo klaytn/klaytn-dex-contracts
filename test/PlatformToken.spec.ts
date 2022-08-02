@@ -10,18 +10,19 @@ describe('PlatformToken', () => {
   let bob: SignerWithAddress;
   let carol: SignerWithAddress;
   let other: SignerWithAddress;
+  let multisig: SignerWithAddress;
   let token: PlatformToken;
   const supply = BigNumber.from('10000000000000000000000000');
 
   before(async () => {
-    [alice, bob, carol, other] = await ethers.getSigners();
+    [alice, bob, carol, other, multisig] = await ethers.getSigners();
   });
 
   beforeEach(async () => {
     const TokenFactory = await ethers.getContractFactory('PlatformToken');
-    token = await TokenFactory.deploy('Platform Token', 'PTN', alice.address);
-    await token.grantRole((await token.MINTER_ROLE()), alice.address);
-    await token.grantRole((await token.BURNER_ROLE()), alice.address);
+    token = await TokenFactory.deploy('Platform Token', 'PTN', multisig.address);
+    await token.connect(multisig).grantRole((await token.MINTER_ROLE()), alice.address);
+    await token.connect(multisig).grantRole((await token.BURNER_ROLE()), alice.address);
     await token.deployed();
   });
 

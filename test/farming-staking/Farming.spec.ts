@@ -13,6 +13,7 @@ describe('Farming', () => {
   let alice: SignerWithAddress;
   let bob: SignerWithAddress;
   let carol: SignerWithAddress;
+  let multisig: SignerWithAddress;
   let ptn: PlatformToken;
   let blockNumber: number;
   let farmingFactory: Farming__factory;
@@ -22,13 +23,13 @@ describe('Farming', () => {
   let lp3: DexKIP7Test;
   let lpFactory: DexKIP7Test__factory;
   beforeEach(async () => {
-    [minter, alice, bob, carol] = await ethers.getSigners();
+    [minter, alice, bob, carol, multisig] = await ethers.getSigners();
     const ptnFactory = await ethers.getContractFactory('PlatformToken');
     lpFactory = await ethers.getContractFactory('DexKIP7Test');
     farmingFactory = await ethers.getContractFactory('Farming');
     // Deploy PTN
-    ptn = await ptnFactory.deploy('PlatformToken', 'PTN', minter.address);
-    expect(await ptn.hasRole((await ptn.DEFAULT_ADMIN_ROLE()), minter.address)).to.be.equal(true);
+    ptn = await ptnFactory.deploy('PlatformToken', 'PTN', multisig.address);
+    expect(await ptn.hasRole((await ptn.DEFAULT_ADMIN_ROLE()), multisig.address)).to.be.equal(true);
     // Deploy LPs
     lp1 = await lpFactory.deploy('1000000');
     lp2 = await lpFactory.deploy('1000000');
@@ -36,7 +37,7 @@ describe('Farming', () => {
     // Deploy farming
     blockNumber = await ethers.provider.getBlockNumber();
     farming = await farmingFactory.deploy(ptn.address, 1000, blockNumber, minter.address);
-    await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
+    await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
     // Token transfers
     await lp1.transfer(bob.address, '2000');
     await lp2.transfer(bob.address, '2000');
@@ -189,8 +190,11 @@ describe('Farming', () => {
     it('should set correct state variables', async () => {
       farming = await farmingFactory.deploy(ptn.address, '1000', '0', minter.address);
       await farming.deployed();
-      expect(await ptn.hasRole((await ptn.DEFAULT_ADMIN_ROLE()), minter.address)).to.be.equal(true);
-      await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
+      expect(await ptn.hasRole(
+        (await ptn.DEFAULT_ADMIN_ROLE()),
+        multisig.address,
+      )).to.be.equal(true);
+      await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
 
       const ptnAddress = await farming.ptn();
 
@@ -220,7 +224,7 @@ describe('Farming', () => {
       // 100 per block farming rate starting at block `blockNumber + 100`
       farming = await farmingFactory.deploy(ptn.address, '1000', blockNumber + 100, minter.address);
       await farming.deployed();
-      await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
+      await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
 
       lp3 = await lpFactory.deploy('10000000000');
       const lp4 = await lpFactory.deploy('10000000000');
@@ -272,7 +276,7 @@ describe('Farming', () => {
       farming = await farmingFactory.deploy(ptn.address, '1000', blockNumber + 200, minter.address);
       lp3 = await lpFactory.deploy('10000000000');
       await farming.deployed();
-      await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
+      await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
       await farming.add('1000', lp1.address, true, 1, '10000');
       await farming.add('1000', lp2.address, true, 1, '10000');
       await farming.add('1000', lp3.address, true, 1, '10000');
@@ -297,7 +301,7 @@ describe('Farming', () => {
       // 100 per block farming rate starting at block `blockNumber + 300`
       farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 300, minter.address);
       await farming.deployed();
-      await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
+      await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
       await farming.add('100', lp1.address, true, 1, '10000');
       await lp1.connect(alice).approve(farming.address, '1000');
       await lp1.connect(bob).approve(farming.address, '1000');
@@ -388,7 +392,7 @@ describe('Farming', () => {
     it('should give proper ptns allocation to each pool [ @skip-on-coverage ]', async () => {
       // 100 per block farming rate starting at block `blockNumber + 400`
       farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 400, minter.address);
-      await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
+      await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
       await lp1.connect(alice).approve(farming.address, '1000');
       await lp2.connect(bob).approve(farming.address, '1000');
       // Add first LP to the pool with allocation 1
@@ -469,7 +473,7 @@ describe('Farming', () => {
     it('should update allocation to each pool', async () => {
       // 100 per block farming rate starting at block `blockNumber + 600`
       farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 600, minter.address);
-      await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
+      await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
       await lp1.connect(alice).approve(farming.address, '1000');
       await lp2.connect(bob).approve(farming.address, '1000');
       // Add first LP to the pool with allocation 1

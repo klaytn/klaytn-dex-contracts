@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import '@nomiclabs/hardhat-ethers';
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomiclabs/hardhat-etherscan';
-import '@nomiclabs/hardhat-waffle';
+import '@nomicfoundation/hardhat-chai-matchers';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
@@ -11,9 +11,15 @@ dotenv.config();
 
 let mnemonic: string;
 if (!process.env.MNEMONIC) {
-  throw new Error('Please set your MNEMONIC in a .env file');
+  throw new Error('Please, set up your MNEMONIC in a .env file');
 } else {
   mnemonic = process.env.MNEMONIC;
+}
+
+if (!process.env.FORKING) {
+  throw new Error('Please, set up the FORKING parameter in a .env file');
+} else if (process.env.FORKING === 'true' && !process.env.FORKING_URL) {
+  throw new Error('Please, provide FORKING_URL parameter in a .env file');
 }
 
 // You need to export an object to set up your config
@@ -42,15 +48,6 @@ const config: HardhatUserConfig = {
           },
         },
       },
-      'contracts/governance/Timelock.sol': {
-        version: '0.6.12',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
       'contracts/utils/SafeMath.sol': {
         version: '0.6.12',
         settings: {
@@ -63,11 +60,12 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    // hardhat: {
-    //   forking: {
-    //     url: 'https://baobab.fandom.finance/archive',
-    //   },
-    // },
+    hardhat: {
+      forking: {
+        enabled: process.env.FORKING !== 'false',
+        url: process.env.FORKING_URL as string,
+      },
+    },
     baobab: {
       url: 'https://api.baobab.klaytn.net:8651/',
       accounts: { mnemonic, initialIndex: 0 },

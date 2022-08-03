@@ -71,9 +71,11 @@ describe('DexPair', () => {
       const [swapAmount, token0Amount, token1Amount, expectedOutputAmount] = swapTestCase;
       await addLiquidity(token0Amount, token1Amount);
       await token0.transfer(pair.address, swapAmount);
-      await expect(pair.swap(0, expectedOutputAmount.add(1), wallet.address, '0x')).to.be.revertedWith(
-        'InsufficientAmount("DEX: K")',
-      );
+      await expect(pair.swap(0, expectedOutputAmount.add(1), wallet.address, '0x')).to.be.revertedWithCustomError(
+        pair,
+        'InsufficientAmount',
+      )
+        .withArgs('DEX: K');
       await pair.swap(0, expectedOutputAmount, wallet.address, '0x');
     });
   });
@@ -89,9 +91,11 @@ describe('DexPair', () => {
       const [outputAmount, token0Amount, token1Amount, inputAmount] = optimisticTestCase;
       await addLiquidity(token0Amount, token1Amount);
       await token0.transfer(pair.address, inputAmount);
-      await expect(pair.swap(outputAmount.add(1), 0, wallet.address, '0x')).to.be.revertedWith(
-        'DEX: K',
-      );
+      await expect(pair.swap(outputAmount.add(1), 0, wallet.address, '0x')).to.be.revertedWithCustomError(
+        pair,
+        'InsufficientAmount',
+      )
+        .withArgs('DEX: K');
       await pair.swap(outputAmount, 0, wallet.address, '0x');
     });
   });
@@ -313,15 +317,18 @@ describe('DexPair', () => {
     await addLiquidity(token0Amount, token1Amount);
     const expectedOutputAmount = BigNumber.from('1662497915624478906');
     await expect(pair.swap(0, expectedOutputAmount, token0.address, '0x'))
-      .to.be.revertedWith('InvalidAddressParameters("DEX: INVALID_TO")');
+      .to.be.revertedWithCustomError(pair, 'InvalidAddressParameters')
+      .withArgs('DEX: INVALID_TO');
     await expect(pair.swap(0, 0, wallet.address, '0x'))
-      .to.be.revertedWith('InsufficientAmount("DEX: INSUFFICIENT_OUTPUT_AMOUNT")');
+      .to.be.revertedWithCustomError(pair, 'InsufficientAmount')
+      .withArgs('DEX: INSUFFICIENT_OUTPUT_AMOUNT');
     await expect(pair.swap(ethers.utils.parseEther('2000'), 0, wallet.address, '0x'))
-      .to.be.revertedWith('InsufficientLiquidity("DEX: INSUFFICIENT_LIQUIDITY")');
+      .to.be.revertedWithCustomError(pair, 'InsufficientLiquidity')
+      .withArgs('DEX: INSUFFICIENT_LIQUIDITY');
     await expect(pair.swap(0, expectedOutputAmount, wallet.address, '0xabcdef'))
-      .to.be.revertedWith('Transaction reverted: function call to a non-contract account');
+      .to.be.rejectedWith('Transaction reverted: function call to a non-contract account');
     await expect(pair.swap(0, expectedOutputAmount, pair.address, '0xabcdef'))
-      .to.be.revertedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
+      .to.be.rejectedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
   });
 
   it('mint fail', async () => {
@@ -329,7 +336,8 @@ describe('DexPair', () => {
     const token1Amount = ethers.utils.parseEther('1000');
     await addLiquidity(token0Amount, token1Amount);
     await expect(pair.mint(wallet.address))
-      .to.be.revertedWith('InsufficientLiquidity("DEX: INSUFFICIENT_LIQUIDITY_MINTED")');
+      .to.be.revertedWithCustomError(pair, 'InsufficientLiquidity')
+      .withArgs('DEX: INSUFFICIENT_LIQUIDITY_MINTED');
   });
 
   it('burn fail', async () => {
@@ -337,10 +345,11 @@ describe('DexPair', () => {
     const token1Amount = ethers.utils.parseEther('1000');
     await addLiquidity(token0Amount, token1Amount);
     await expect(pair.burn(wallet.address))
-      .to.be.revertedWith('InsufficientLiquidity("DEX: INSUFFICIENT_LIQUIDITY_BURNED")');
+      .to.be.revertedWithCustomError(pair, 'InsufficientLiquidity')
+      .withArgs('DEX: INSUFFICIENT_LIQUIDITY_BURNED');
   });
 
   it('init fail', async () => {
-    await expect(pair.initialize(token0.address, token1.address)).to.be.revertedWith('Unauthorized()');
+    await expect(pair.initialize(token0.address, token1.address)).to.be.revertedWithCustomError(pair, 'Unauthorized');
   });
 });

@@ -63,7 +63,7 @@ export async function routerFixture(deployer: SignerWithAddress): Promise<Router
     WKLAY,
     WKLAYPartner,
     factory,
-    router, // the default router, 01 had a minor bug
+    router,
     pair,
     WKLAYPair,
   };

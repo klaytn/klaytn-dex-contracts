@@ -14,7 +14,7 @@ contract PlatformToken is KIP7Votes, AccessControl {
         address _multisig
     ) KIP7(_name, _symbol) KIP7Permit(_name) {
         _grantRole(DEFAULT_ADMIN_ROLE, _multisig);
-        // _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /**

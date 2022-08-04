@@ -11,8 +11,6 @@ linkcolor: #e3232c
 
 <!-- start intro: only for github, remove if creating a pdf -->
 
-Dex is an automated liquidity protocol powered by a constant product formula and implemented in a system of non-upgradeable smart contracts on the Klaytn blockchain. It obviates the need for trusted intermediaries, prioritizing decentralization, censorship resistance, and security. Dex is open-source software licensed under the GPL.
-
 This document provides detailed specification for the Dex smart contracts, discusses security concerns, and offers the general information about the project needed to better understand its nature.
 
 ## Contents<!-- omit in toc -->
@@ -90,13 +88,15 @@ Below we offer a brief overview of the project design and define the terms used 
 
 ### Dex
 
-Dex is an automated liquidity protocol powered by a [constant product formula](#constant-product-formula) and implemented in a system of non-upgradeable smart contracts on the Klaytn blockchain.
+Dex is an automated liquidity protocol powered by a [constant product formula](#constant-product-formula) and implemented in a system of smart contracts. Dex is designed as a highly customizable system, and so it **does not have the tokenomics defined**. Each instance of Dex will define its own tokenomics.
 
-Dex is designed as a highly customizable system, and so it **does not have the tokenomics defined**. Each instance of Dex will define its own tokenomics.
+### DEX platform
+
+DEX platform combines [Dex protocol](#dex), which is a system of non-upgradeable smart contracts implemented for the Klaytn blockchain, with other smart contracts, e.g. farming and staking.
 
 ### Constant Product Formula
 
-The automated market making algorithm used by Dex: `x * y = k`. The formula states that the trades must not change the product (`k`) of a pair's reserve balances (`x` and `y`).
+The automated market making algorithm used by [Dex](#dex): `x * y = k`. The formula states that the trades must not change the product (`k`) of a pair's reserve balances (`x` and `y`).
 
 #### Invariant
 
@@ -104,7 +104,7 @@ The `k` value in the [constant product formula](#constant-product-formula) is ca
 
 ### Token Types
 
-Dex works with ERC20 and KIP7 token standards that implement APIs for fungible tokens within smart contracts.
+[Dex protocol](#dex) works with ERC20 and KIP7 token standards that implement APIs for fungible tokens within smart contracts.
 
 #### ERC20
 
@@ -854,13 +854,13 @@ The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission to grant and r
 
 ## Security Concerns
 
-As mentioned above, there is no tokenomics defined in Dex. Each instance of Dex would need to define and implement its own model, which might mean reworking or completely rewriting the smart contracts.
+As mentioned above, there is no tokenomics defined in Dex protocol. Each instance of Dex would need to define and implement its own model, which might mean reworking or completely rewriting the smart contracts.
 
-Reserves and balances should match. In case they do not (e.g. when adding tokens via transfers from outside of Dex), there are recovery mechanisms to force reserves and balances to match. These recovery mechanisms are `sync` and `skim` functions defined in [`DexPair` contract](#dexpair).
+Reserves and balances should match. In case they do not (e.g. when adding tokens via transfers from outside of DEX platform), there are recovery mechanisms to force reserves and balances to match. These recovery mechanisms are `sync` and `skim` functions defined in [`DexPair` contract](#dexpair).
 
-A lot of functionality in Dex is owned and controlled via [`multisig` contract](#multisignature-wallet). This contract is a multisignature wallet that allows multiple parties to agree on transactions before they are executed. However, it is still a single contract controlling other functionality, which means it poses security risks associated with the certain degree of system centralization.
+A lot of functionality on DEX platform is owned and controlled via [`multisig` contract](#multisignature-wallet). This contract is a multisignature wallet that allows multiple parties to agree on transactions before they are executed. However, it is still a single contract controlling other functionality, which means it poses security risks associated with the certain degree of system centralization.
 
-Dex has emergency withdraw operations in place to fetch all rewards from a staking pool: `emergencyWithdraw` in both [staking](#stakinginitializable) and [farming](#farming) contracts, and `emergencyRewardWithdraw` in the [staking](#stakinginitializable) contract. The `emergencyRewardWithdraw` is controlled by the [`multisig` contract](#multisignature-wallet).
+DEX platform has emergency withdraw operations in place to fetch all rewards from a staking pool: `emergencyWithdraw` in both [staking](#stakinginitializable) and [farming](#farming) contracts, and `emergencyRewardWithdraw` in the [staking](#stakinginitializable) contract. The `emergencyRewardWithdraw` is controlled by the [`multisig` contract](#multisignature-wallet).
 
 There are also security concerns common with other decentralized systems. These are intentional attacks such as:
 

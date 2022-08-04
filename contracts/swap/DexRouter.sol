@@ -12,7 +12,7 @@ import "./Errors.sol";
 contract DexRouter is IDexRouter {
     ///@dev Returns factory address.
     address public immutable override factory;
-    ///@dev Returns the WETH address
+    ///@dev Returns the WKLAY address
     address public immutable override WKLAY;
 
     modifier ensure(uint256 deadline) {
@@ -142,7 +142,7 @@ contract DexRouter is IDexRouter {
      * Always adds assets at the ideal ratio, according to the price when the transaction is executed.
      * msg.value is treated as a amountKLAYDesired.
      * Leftover KLAY, if any, is returned to msg.sender.
-     * If a pool for the passed token and WETH does not exists, one is created automatically,
+     * If a pool for the passed token and WKLAY does not exists, one is created automatically,
      * and exactly amountTokenDesired/msg.value tokens are added.
      * @param token A pool token.
      * @param amountTokenDesired The amount of token to add as liquidity if the WKLAY/token price
@@ -154,7 +154,7 @@ contract DexRouter is IDexRouter {
      * @param to Recipient of the liquidity tokens.
      * @param deadline Unix timestamp after which the transaction will revert.
      * @return amountToken The amount of token sent to the pool.
-     * @return amountKLAY The amount of ETH converted to WKLAY and sent to the pool.
+     * @return amountKLAY The amount of KLAY converted to WKLAY and sent to the pool.
      * @return liquidity The amount of liquidity tokens minted.
      */
     function addLiquidityKLAY(
@@ -605,8 +605,8 @@ contract DexRouter is IDexRouter {
     }
 
     /**
-     * @notice Swaps an exact amount of tokens for as much ETH as possible, along the route determined by
-     * the path. The first element of path is the input token, the last must be WETH, and any intermediate
+     * @notice Swaps an exact amount of tokens for as much KLAY as possible, along the route determined by
+     * the path. The first element of path is the input token, the last must be WKLAY, and any intermediate
      * elements represent intermediate pairs to trade through (if, for example, a direct pair does not exist).
      * @dev If the to address is a smart contract, it must have the ability to receive KLAY.
      * @param amountIn The amount of input tokens to send.

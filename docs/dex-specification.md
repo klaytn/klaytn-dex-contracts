@@ -156,7 +156,7 @@ After a certain number of signers confirmed an operation, it can be executed. Af
 
 Dex uses Uniswap V2 smart contract system, which is a binary system consisting of the core and periphery contracts. [Core contracts](#core) provide fundamental safety guarantees for all parties interacting with Dex. [Periphery contracts](#periphery) interact with one or more core contracts but are not themselves part of the core.
 
-![Dex module](dex-module.png){ width=400px }
+![Dex module](img/dex-module.png)<!-- pdf option: { width=400px } -->
 
 Refer to [factory](#dexfactory), [pair](#dexpair), [router](#dexrouter), [library](#dexlibrary) contracts for their descriptions.
 
@@ -895,8 +895,8 @@ Refer to [Farming and Staking](#farming-and-staking) for details.
 
 ### Type 1 Smart Contract
 
-![Smart contracts for farming (Type 1)](img/Staking-Type1.png){ width=550px }
+![Smart contracts for farming (Type 1)](img/Staking-Type1.png)<!-- pdf option: { width=550px } -->
 
 ### Type 2 Smart Contract
 
-![Smart contracts for staking (Type 2)](img/Staking-Type2.png){ width=550px }
+![Smart contracts for staking (Type 2)](img/Staking-Type2.png)<!-- pdf option: { width=550px } -->

@@ -164,7 +164,7 @@ Refer to [factory](#dexfactory), [pair](#dexpair), [router](#dexrouter), [librar
 
 Smart contracts are deployed in the following order:
 
-1. WETH (needed for testnet)
+1. WKLAY (needed for testnet)
 2. [Dex Factory](#dexfactory)
 3. [Dex Router](#dexrouter)
 4. [Multisig](#multisignature-wallet)

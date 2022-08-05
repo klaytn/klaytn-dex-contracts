@@ -1,0 +1,9 @@
+\usepackage{fancyvrb,newverbs,xcolor}
+
+\definecolor{SoraBlack}{HTML}{2D2926}
+\definecolor{SoraGrey}{HTML}{D9D9D6}
+
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{
+  \colorbox{SoraGrey!20}{\textcolor{SoraBlack}{\oldtexttt{#1}}}
+}

@@ -1,0 +1,1 @@
+This document provides detailed specification for the Dex smart contracts, discusses security concerns, and offers the general information about the project needed to better understand its nature.

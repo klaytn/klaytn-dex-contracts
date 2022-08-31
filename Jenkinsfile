@@ -1,6 +1,6 @@
 @Library('jenkins-library@feature/PSS-1335/SlitherCI')
 
-String agentLabel             = 'docker-build-agent-docker-20'
+String agentLabel             = 'docker-build-agent'
 String registry               = 'docker.soramitsu.co.jp'
 String dockerBuildToolsUserId = 'bot-build-tools-ro'
 

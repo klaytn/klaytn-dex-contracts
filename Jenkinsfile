@@ -1,9 +1,12 @@
 @Library('jenkins-library@feature/PSS-1335/SlitherCI')
 
+String agentLabel             = 'docker-build-agent-docker-20'
+
 String contractsPath          = 'ethereum-bridge-contracts'
 String contractsEnvFile       = 'env.template'
 String solcVersion            = '0.8.14'
 String nodeVersion            = '14.16.1'
+
 
 pipeline {
     options {

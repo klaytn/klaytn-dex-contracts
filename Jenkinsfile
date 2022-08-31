@@ -4,8 +4,8 @@ String agentLabel             = 'docker-build-agent-docker-20'
 String registry               = 'docker.soramitsu.co.jp'
 String dockerBuildToolsUserId = 'bot-build-tools-ro'
 
-String contractsPath          = 'ethereum-bridge-contracts'
-String contractsEnvFile       = 'env.template'
+String contractsPath          = '.'
+String contractsEnvFile       = 'slither-env'
 String solcVersion            = '0.8.14'
 String nodeVersion            = '14.16.1'
 

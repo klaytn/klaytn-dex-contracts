@@ -9,6 +9,7 @@ String contractsEnvFile       = 'slither-env'
 String solcVersion            = '0.8.14'
 String nodeVersion            = '14.16.1'
 
+
 pipeline {
     options {
         buildDiscarder(logRotator(numToKeepStr: '20'))

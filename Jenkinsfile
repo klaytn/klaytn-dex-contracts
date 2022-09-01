@@ -1,4 +1,4 @@
-@Library('jenkins-library@feature/PSS-1335/SlitherCI')
+@Library('jenkins-library')
 
 String agentLabel             = 'docker-build-agent'
 String registry               = 'docker.soramitsu.co.jp'

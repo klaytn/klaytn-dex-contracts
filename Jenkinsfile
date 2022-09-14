@@ -1,4 +1,4 @@
-@Library('jenkins-library')
+@Library('jenkins-library@feature/SNE-239/Mythril')
 
 String agentLabel             = 'docker-build-agent'
 String registry               = 'docker.soramitsu.co.jp'

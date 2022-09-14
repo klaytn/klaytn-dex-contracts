@@ -9,7 +9,7 @@ String contractsEnvFile       = 'slither-env'
 String solcVersion            = '0.8.14'
 String nodeVersion            = '14.16.1'
 
-String mythrilTimeoutSecs     = 20
+String mythrilTimeoutSecs     = 15
 String mythrilExcludeFiles    = 'mocks,interfaces,artifacts'
 
 pipeline {

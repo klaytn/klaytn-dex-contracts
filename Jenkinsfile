@@ -9,7 +9,7 @@ String contractsEnvFile       = 'slither-env'
 String solcVersion            = '0.8.14'
 String nodeVersion            = '14.16.1'
 
-String mythrilTimeoutSecs     = 15
+String mythrilTimeoutSecs     = 30
 String mythrilExcludeFiles    = 'mocks,interfaces,artifacts'
 
 pipeline {
@@ -22,29 +22,23 @@ pipeline {
         label agentLabel
     }
     stages {
-        stage('Solidity Security Scanning'){
-                    parallel{
-                        stage('Mythril') {
-                            steps {
-                                script {
-                                    docker.withRegistry('https://' + registry, dockerBuildToolsUserId) {
-                                        mythril(contractsPath, nodeVersion, mythrilTimeoutSecs, mythrilExcludeFiles)
-                                    }
-                                }
-                            }
-                        }
-                        stage('Slither') {
-                            steps {
-                                script {
-                                    docker.withRegistry('https://' + registry, dockerBuildToolsUserId) {
-                                        slither(contractsPath, contractsEnvFile, solcVersion, nodeVersion)
-                                    }
-                                }
-                            }
-                        }
-
+        stage('Mythril Solidity Security Scan') {
+            steps {
+                script {
+                    docker.withRegistry('https://' + registry, dockerBuildToolsUserId) {
+                        mythril(contractsPath, nodeVersion, mythrilTimeoutSecs, mythrilExcludeFiles)
                     }
+                }
+            }
         }
-
+        stage('Slither Solidity Security Scan') {
+            steps {
+                script {
+                    docker.withRegistry('https://' + registry, dockerBuildToolsUserId) {
+                        slither(contractsPath, contractsEnvFile, solcVersion, nodeVersion)
+                    }
+                }
+            }
+        }
     }
 }

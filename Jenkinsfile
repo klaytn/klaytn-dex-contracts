@@ -9,8 +9,9 @@ String contractsEnvFile       = 'slither-env'
 String solcVersion            = '0.8.14'
 String nodeVersion            = '14.16.1'
 
-String mythrilTimeoutSecs     = 20
-String mythrilExcludeFiles    = 'mocks,interfaces,artifacts,node_modules'
+String mythrilTimeoutSecs       = 20
+String mythrilWeeklyTimeoutSecs = 600
+String mythrilExcludeFiles      = 'mocks,interfaces,artifacts,node_modules'
 
 pipeline {
     options {
@@ -21,7 +22,22 @@ pipeline {
     agent {
         label agentLabel
     }
+    triggers {
+        cron("@weekly")
+    }
     stages {
+        stage("Weekly Mythril"){
+            when{
+                triggeredBy 'TimerTrigger'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://' + registry, dockerBuildToolsUserId) {
+                        mythril(contractsPath, nodeVersion, mythrilWeeklyTimeoutSecs, mythrilExcludeFiles)
+                    }
+                }
+            }
+        }
         stage('Mythril Solidity Security Scan') {
             steps {
                 script {

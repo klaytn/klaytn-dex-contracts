@@ -9,7 +9,7 @@ String contractsEnvFile       = 'slither-env'
 String solcVersion            = '0.8.14'
 String nodeVersion            = '14.16.1'
 
-String mythrilTimeoutSecs       = 21
+String mythrilTimeoutSecs       = 20
 String mythrilWeeklyTimeoutSecs = 600
 String mythrilExcludeFiles      = 'mocks,interfaces,artifacts,node_modules'
 
@@ -40,7 +40,7 @@ pipeline {
         }
         stage('Mythril Solidity Security Scan') {
             when{
-                    not triggeredBy 'TimerTrigger'
+                !triggeredBy 'TimerTrigger'
             }
             steps {
                 script {
@@ -52,7 +52,7 @@ pipeline {
         }
         stage('Slither Solidity Security Scan') {
             when{
-                    not triggeredBy 'TimerTrigger'
+                !triggeredBy 'TimerTrigger'
             }
             steps {
                 script {

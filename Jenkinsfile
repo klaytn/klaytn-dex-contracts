@@ -39,6 +39,9 @@ pipeline {
             }
         }
         stage('Mythril Solidity Security Scan') {
+            when{
+                    not triggered
+            }
             steps {
                 script {
                     docker.withRegistry('https://' + registry, dockerBuildToolsUserId) {
@@ -48,6 +51,9 @@ pipeline {
             }
         }
         stage('Slither Solidity Security Scan') {
+            when{
+                    not triggered
+            }
             steps {
                 script {
                     docker.withRegistry('https://' + registry, dockerBuildToolsUserId) {

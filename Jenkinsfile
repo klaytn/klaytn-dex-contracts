@@ -40,7 +40,7 @@ pipeline {
         }
         stage('Mythril Solidity Security Scan') {
             when{
-                !triggeredBy 'TimerTrigger'
+                !triggered
             }
             steps {
                 script {
@@ -52,7 +52,7 @@ pipeline {
         }
         stage('Slither Solidity Security Scan') {
             when{
-                !triggeredBy 'TimerTrigger'
+                !triggered
             }
             steps {
                 script {

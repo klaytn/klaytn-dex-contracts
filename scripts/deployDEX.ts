@@ -71,7 +71,7 @@ async function main() {
   const factoryInstance = await factory.deploy(deployer);
   await factoryInstance.deployed();
   console.log(`Dex Factory deployed to: ${factoryInstance.address}`);
-  await writeDeploymentForSubgraph('Factory', factoryInstance);
+  await writeDeploymentForSubgraph('DexFactory', factoryInstance);
 
   // Deploy Dex Router passing Factory Address and WKLAY Address
   const router = await ethers.getContractFactory('DexRouter');

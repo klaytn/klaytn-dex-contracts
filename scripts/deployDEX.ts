@@ -10,15 +10,17 @@ import * as dotenv from 'dotenv';
 
 interface DeployDetails {
   [key: string]: {
-    [key: string]: {
-      address: string;
-      startBlock: number;
-    } }
+    address: string;
+    startBlock: number;
+  }
+}
+interface Networks {
+  [key: string]: DeployDetails
 }
 let adminsList: string[];
 let sigRequired: string;
 let rewardPerBlock: BigNumber;
-let config: DeployDetails;
+let config: Networks;
 dotenv.config();
 
 if (!process.env.ADMIN_LIST && !process.env.SIG_REQUIRED) {
@@ -52,7 +54,13 @@ const writeDeploymentForSubgraph = async (
   if (!fs.existsSync('./deployments')) {
     fs.mkdirSync('./deployments');
   }
-  fs.writeFileSync(`./deployments/${type}-${name}.json`, JSON.stringify(config, null, 2));
+  if (fs.existsSync(`./deployments/networks-${type}.json`)) {
+    const oldConfig = JSON.parse(fs.readFileSync(`./deployments/networks-${type}.json`, 'utf8'));
+    config = { ...oldConfig, ...config };
+    fs.writeFileSync(`./deployments/networks-${type}.json`, JSON.stringify(config, null, 2));
+  } else {
+    fs.writeFileSync(`./deployments/networks-${type}.json`, JSON.stringify(config, null, 2));
+  }
 };
 
 async function main() {

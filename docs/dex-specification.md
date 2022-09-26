@@ -17,6 +17,7 @@ This document provides detailed specification for the Dex smart contracts, discu
 
 - [Introduction](#introduction)
   - [Dex](#dex)
+  - [DEX platform](#dex-platform)
   - [Constant Product Formula](#constant-product-formula)
     - [Invariant](#invariant)
   - [Token Types](#token-types)
@@ -25,6 +26,7 @@ This document provides detailed specification for the Dex smart contracts, discu
   - [Factory](#factory)
   - [Pair](#pair)
   - [Token Swap](#token-swap)
+    - [`DEXswap`](#dexswap)
   - [Liquidity Pool](#liquidity-pool)
   - [Liquidity Provider](#liquidity-provider)
   - [Liquidity Provider Fee](#liquidity-provider-fee)
@@ -37,6 +39,7 @@ This document provides detailed specification for the Dex smart contracts, discu
       - [Factory Contract: Functions](#factory-contract-functions)
         - [`createPair`](#createpair)
     - [`DexPair`](#dexpair)
+      - [Year 2038 Problem](#year-2038-problem)
       - [Pair Contract: Events](#pair-contract-events)
       - [Pair Contract: Functions](#pair-contract-functions)
         - [`mint`](#mint)
@@ -65,12 +68,17 @@ This document provides detailed specification for the Dex smart contracts, discu
       - [`deployPool`](#deploypool)
     - [`StakingInitializable`](#stakinginitializable)
       - [Staking: PoolInfo](#staking-poolinfo)
+        - [User Limit](#user-limit)
       - [Staking: UserInfo](#staking-userinfo)
       - [Staking: Events](#staking-events)
       - [Staking: Reward Debt and Pending Reward](#staking-reward-debt-and-pending-reward)
       - [Staking: Functions](#staking-functions)
         - [Staking: `_getMultiplier`](#staking-_getmultiplier)
         - [Staking: `_updatePool`](#staking-_updatepool)
+        - [Staking: `updateStartAndEndBlocks`](#staking-updatestartandendblocks)
+        - [Staking: `updateRewardPerBlock`](#staking-updaterewardperblock)
+        - [Staking: `hasUserLimit`](#staking-hasuserlimit)
+        - [Staking: `updatePoolLimitPerUser`](#staking-updatepoollimitperuser)
   - [Access](#access)
     - [`Ownable`](#ownable)
       - [`Ownable`: Functions](#ownable-functions)
@@ -623,7 +631,6 @@ Whenever the user `deposit`s or `withdraw`s LP tokens to a pool, the following c
 | `updateMultiplier`                        | Update reward multiplier for the specified pool. The `bonusMultiplier` in the `PoolInfo` is updated with the provided value.                                                                                                   |
 | `updatePtnPerBlock`                       | Update the number of PTN tokens created per block.                                                                                                                                                                             |
 | [`getMultiplier`](#farming-getmultiplier) | Return the reward multiplier between two given blocks for the specified pool.                                                                                                                                                  |
-| `safePtnTransfer`                         | Safely transfer the specified amount of PTN tokens to the given address. This is needed in case the rounding error causes a pool to not have enough PTN tokens.                                                                |                                                                                                                                                             |
 
 <!-- pdf table 
 
@@ -658,10 +665,7 @@ Function                                  Description
 `updatePtnPerBlock`                       Update the number of PTN tokens created per block.
 
 [`getMultiplier`](#farming-getmultiplier) Return the reward multiplier between two given blocks for the specified pool.
-
-`safePtnTransfer`                         Safely transfer the specified amount of PTN tokens to the given address.
-                                          This is needed in case the rounding error causes a pool to not have enough PTN tokens.
----------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 -->
 
@@ -741,6 +745,12 @@ The structure contain the following information about the pool:
 - the amount of PTN tokens created per block
 - the total amount of staked tokens
 
+###### User Limit
+
+The `PoolInfo` structure of the Staking contract specifies whether or not there is a limit set for users (`userLimit`). If there is a limit, the `poolLimitPerUser` contains the max amount of staked tokens per user. If no limit is set, that value is zero. The `numberBlocksForUserLimit` contains information on how many blocks `poolLimitPerUser` is valid. For example, if `numberBlocksForUserLimit` is `86400` blocks, after `86400` blocks users will not have any limits.
+
+The user limit is checked with the [`hasUserLimit`](#staking-hasuserlimit) function and updated with the [`updatePoolLimitPerUser`](#staking-updatepoollimitperuser) function.
+
 ##### Staking: UserInfo
 
 The structure contains the information about the amount of staked tokens that the user provided (`amount`) and their reward debt (`rewardDebt`).
@@ -783,12 +793,12 @@ Whenever the user `deposit`s or `withdraw`s staked tokens to a pool, the followi
 | `deposit`                                                     | Deposit staked tokens and collect reward tokens (if any).                                                          |
 | `withdraw`                                                    | Withdraw staked tokens and collect reward tokens (if any).                                                         |
 | `recoverToken`                                                | Recover tokens sent to the contract by mistake. Can only be called by [multisig contract](#multisignature-wallet). |
-| `updatePoolLimitPerUser`                                      | Update pool limit per user. Can only be called by [multisig contract](#multisignature-wallet).                     |
+| [`updatePoolLimitPerUser`](#staking-updatepoollimitperuser)   | Update pool limit per user. Can only be called by [multisig contract](#multisignature-wallet).                     |
 | [`updateRewardPerBlock`](#staking-updaterewardperblock)       | Update reward per block. Can only be called by [multisig contract](#multisignature-wallet).                        |
 | [`updateStartAndEndBlocks`](#staking-updatestartandendblocks) | Update the start and end blocks. Can only be called by [multisig contract](#multisignature-wallet).                |
 | [`_updatePool`](#staking-_updatepool)                         | Update reward variables for the given pool.                                                                        |
 | [`_getMultiplier`](#staking-_getmultiplier)                   | Return reward multiplier between two given blocks for the specified pool.                                          |
-| `hasUserLimit`                                                | Check if the user limit is set. (?)                                                                                |
+| [`hasUserLimit`](#staking-hasuserlimit)                       | Check if the [user limit](#user-limit) is set.                                                                     |
 
 For emergency situations:
 
@@ -858,6 +868,14 @@ Update reward per block. The reward can only be updated before the reward accumu
 This function can only be called by the contract owner ([multisig contract](#multisignature-wallet)).
 
 **Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool  address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the reward token value with `updateRewardPerBlock`. Changing the reward also leads to changing the pool address.
+
+###### Staking: `hasUserLimit`
+
+The function checks whether the [user limit](#user-limit) is set for the staking pool.
+
+###### Staking: `updatePoolLimitPerUser`
+
+The function updates the [user limit](#user-limit) for the staking pool. Input parameters specifies whether the user limit remains in place, and the new value for `poolLimitPerUser`. The new limit must be higher than the current limit.
 
 ### Access
 

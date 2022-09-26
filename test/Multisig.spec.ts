@@ -2,8 +2,8 @@ import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { MultiSigWallet__factory } from '../typechain/factories/multisig/Multisig.sol/MultiSigWallet__factory';
-import { MultiSigWallet } from '../typechain/multisig/Multisig.sol/MultiSigWallet';
+import { MultiSigWallet__factory } from '../typechain/factories/contracts/multisig/Multisig.sol/MultiSigWallet__factory';
+import { MultiSigWallet } from '../typechain/contracts/multisig/Multisig.sol/MultiSigWallet';
 
 describe('Multisig', () => {
   let owner: SignerWithAddress;

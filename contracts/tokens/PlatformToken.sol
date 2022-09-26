@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.12;
 
-import "./extensions/KIP7Votes.sol";
-import "../utils/access/AccessControl.sol";
+import "@klaytn/contracts/KIP/token/KIP7/extensions/KIP7Votes.sol";
+import "@klaytn/contracts/KIP/access/KAccessControl.sol";
 
-contract PlatformToken is KIP7Votes, AccessControl {
+contract PlatformToken is KAccessControl, KIP7Votes {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
@@ -24,7 +24,7 @@ contract PlatformToken is KIP7Votes, AccessControl {
         public
         view
         virtual
-        override(KIP7, AccessControl)
+        override(KIP7, KAccessControl)
         returns (bool)
     {
         return

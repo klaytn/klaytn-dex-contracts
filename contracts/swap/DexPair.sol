@@ -5,7 +5,7 @@ import "../interfaces/IDexPair.sol";
 import "./DexKIP7.sol";
 import "../libraries/Math.sol";
 import "../libraries/UQ112x112.sol";
-import "../interfaces/IKIP7.sol";
+import "@klaytn/contracts/KIP/interfaces/IKIP7.sol";
 import "../interfaces/IDexFactory.sol";
 import "../interfaces/IDexCallee.sol";
 import "./Errors.sol";

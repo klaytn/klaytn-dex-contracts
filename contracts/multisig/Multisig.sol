@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0
 // Modified from https://github.com/gnosis/MultiSigWallet/blob/master/contracts/MultiSigWallet.sol
 pragma solidity =0.8.12;
-import "../utils/structs/EnumerableSet.sol";
+import "@klaytn/contracts/utils/structs/EnumerableSet.sol";
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>

@@ -1,8 +1,8 @@
-import { DexFactory } from '../../typechain/swap/DexFactory';
-import { DexPair } from '../../typechain/swap/DexPair';
-import { KIP7Mock } from '../../typechain/mocks/KIP7TestMock.sol/KIP7Mock';
-import { DexRouter } from '../../typechain/swap/DexRouter';
-import { WETH9 } from '../../typechain/tokens/WKLAY.sol/WETH9';
+import { DexFactory } from '../../typechain/contracts/swap/DexFactory';
+import { DexPair } from '../../typechain/contracts/swap/DexPair';
+import { KIP7Mock } from '../../typechain/contracts/mocks/KIP7TestMock.sol/KIP7Mock';
+import { DexRouter } from '../../typechain/contracts/swap/DexRouter';
+import { WETH9 } from '../../typechain/contracts/tokens/WKLAY.sol/WETH9';
 
 export interface FactoryFixture {
   factory: DexFactory

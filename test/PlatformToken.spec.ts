@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
-import { PlatformToken } from '../typechain/tokens/PlatformToken';
+import { PlatformToken } from '../typechain/contracts/tokens/PlatformToken';
 
 describe('PlatformToken', () => {
   let alice: SignerWithAddress;

@@ -7,8 +7,8 @@ import {
 import { constants } from 'ethers';
 import { getPermitSignature, getDomainSeparator } from '../shared/utilities';
 import { factoryFixture } from '../shared/fixtures';
-import { DexKIP7Test } from '../../typechain/mocks/DexKIP7Test';
-import { DexKIP7Test__factory } from '../../typechain/factories/mocks/DexKIP7Test__factory';
+import { DexKIP7Test } from '../../typechain/contracts/mocks/DexKIP7Test';
+import { DexKIP7Test__factory } from '../../typechain/factories/contracts/mocks/DexKIP7Test__factory';
 
 const TOTAL_SUPPLY = ethers.utils.parseEther('10000');
 const TEST_AMOUNT = ethers.utils.parseEther('10');

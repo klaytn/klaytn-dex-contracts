@@ -2,11 +2,11 @@ import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { mineUpTo } from '@nomicfoundation/hardhat-network-helpers';
-import { Farming__factory } from '../../typechain/factories/farming/Farming__factory';
-import { DexKIP7Test__factory } from '../../typechain/factories/mocks/DexKIP7Test__factory';
-import { Farming } from '../../typechain/farming/Farming';
-import { PlatformToken } from '../../typechain/tokens/PlatformToken';
-import { DexKIP7Test } from '../../typechain/mocks/DexKIP7Test';
+import { Farming__factory } from '../../typechain/factories/contracts/farming/Farming__factory';
+import { DexKIP7Test__factory } from '../../typechain/factories/contracts/mocks/DexKIP7Test__factory';
+import { Farming } from '../../typechain/contracts/farming/Farming';
+import { PlatformToken } from '../../typechain/contracts/tokens/PlatformToken';
+import { DexKIP7Test } from '../../typechain/contracts/mocks/DexKIP7Test';
 
 describe('Farming', () => {
   let minter: SignerWithAddress;

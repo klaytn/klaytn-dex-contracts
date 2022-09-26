@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.12;
 
-import "../utils/access/Ownable.sol";
+import "@klaytn/contracts/access/Ownable.sol";
 import "./StakingFactoryPool.sol";
-import "../interfaces/IKIP7.sol";
+import "@klaytn/contracts/KIP/interfaces/IKIP7.sol";
 
 contract StakingFactory is Ownable {
     event NewStakingContract(address indexed staking);

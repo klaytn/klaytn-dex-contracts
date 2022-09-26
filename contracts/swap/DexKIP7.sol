@@ -2,9 +2,9 @@
 pragma solidity =0.8.12;
 
 import '../interfaces/IDexKIP7.sol';
-import '../interfaces/IKIPReciever.sol';
-import '../utils/Address.sol';
-import '../utils/KIP13.sol';
+import "@klaytn/contracts/KIP/interfaces/IKIP7Receiver.sol";
+import '@klaytn/contracts/utils/Address.sol';
+import '@klaytn/contracts/KIP/utils/introspection/KIP13.sol';
 
 contract DexKIP7 is IDexKIP7, KIP13 {
     using Address for address;
@@ -249,7 +249,7 @@ contract DexKIP7 is IDexKIP7, KIP13 {
             return true;
         }
 
-        bytes4 retval = IKIP7TokenReceiver(recipient).onKIP7Received(msg.sender, sender, amount, _data);
+        bytes4 retval = IKIP7Receiver(recipient).onKIP7Received(msg.sender, sender, amount, _data);
         return (retval == _KIP7_RECEIVED);
     }
 }

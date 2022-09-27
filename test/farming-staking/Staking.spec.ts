@@ -67,7 +67,7 @@ describe('Staking', () => {
     });
 
     it('Initial parameters are correct', async () => {
-      expect(await staking.PRECISION_FACTOR()).to.be.equal('1000000000000');
+      expect(await staking.PRECISION_FACTOR()).to.be.equal('10000000000000000000');
       const pool = await staking.pool();
       expect(pool.lastRewardBlock).to.be.equal(startBlock);
       assert.equal(String(pool.rewardPerBlock), rewardPerBlock.toString());
@@ -119,14 +119,14 @@ describe('Staking', () => {
       await expect(staking.connect(carol).deposit(parseEther('0')))
         .to.emit(staking, 'Deposit')
         .withArgs(carol.address, 0);
-      assert.equal(String(await mockPT.balanceOf(carol.address)), String(parseEther('28.92857142855')));
+      assert.equal(String(await mockPT.balanceOf(carol.address)), String(parseEther('28.928571428571428570')));
     });
 
     it('Can collect rewards by calling withdraw with amount = 0', async () => {
       await expect(staking.connect(carol).withdraw(parseEther('0')))
         .to.emit(staking, 'Withdraw')
         .withArgs(carol.address, 0);
-      assert.equal(String(await mockPT.balanceOf(carol.address)), String(parseEther('30.3571428571')));
+      assert.equal(String(await mockPT.balanceOf(carol.address)), String(parseEther('30.357142857142857140')));
     });
 
     it('Carol cannot withdraw more than she had', async () => {

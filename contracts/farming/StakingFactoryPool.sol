@@ -12,7 +12,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     // The address of the smart chef factory
     address public immutable STAKING_FACTORY;
     // The precision factor
-    uint256 public PRECISION_FACTOR;
+    uint256 public constant PRECISION_FACTOR = 10e18;
 
     struct PoolInfo {
         // Whether it is initialized
@@ -93,6 +93,11 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         require(msg.sender == STAKING_FACTORY, "Not factory");
         require(_startBlock < _rewardEndBlock, "Invalid start block");
 
+        uint256 decimalsRewardToken = uint256(
+            IKIP7Metadata(_rewardToken).decimals()
+        );
+        require(decimalsRewardToken < 30, "Must be less than 30");
+        
         // Make this contract initialized
         pool.isInitialized = true;
 
@@ -109,13 +114,6 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
             pool.numberBlocksForUserLimit = _numberBlocksForUserLimit
                 .toUint64();
         }
-
-        uint256 decimalsRewardToken = uint256(
-            IKIP7Metadata(_rewardToken).decimals()
-        );
-        require(decimalsRewardToken < 30, "Must be less than 30");
-
-        PRECISION_FACTOR = uint256(10**(uint256(30) - decimalsRewardToken));
 
         // Transfer ownership to the multisig address who becomes owner of the contract
         transferOwnership(_multisig);

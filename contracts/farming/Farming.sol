@@ -268,7 +268,7 @@ contract Farming is Ownable, ReentrancyGuard {
             uint256 pending = ((user.amount * pool.accPtnPerShare) /
                 ACC_PRECISION) - user.rewardDebt;
             if (pending > 0) {
-                safePtnTransfer(msg.sender, pending);
+                TransferHelper.safeTransfer(address(ptn), msg.sender, pending);
             }
         }
         if (_amount > 0) {
@@ -300,7 +300,7 @@ contract Farming is Ownable, ReentrancyGuard {
         uint256 pending = ((user.amount * pool.accPtnPerShare) /
             ACC_PRECISION) - user.rewardDebt;
         if (pending > 0) {
-            safePtnTransfer(msg.sender, pending);
+            TransferHelper.safeTransfer(address(ptn), msg.sender, pending);
         }
         if (_amount > 0) {
             user.amount -= _amount;
@@ -309,20 +309,6 @@ contract Farming is Ownable, ReentrancyGuard {
         }
         user.rewardDebt = (user.amount * pool.accPtnPerShare) / ACC_PRECISION;
         emit Withdraw(msg.sender, _pid, _amount);
-    }
-
-    /** 
-     * @dev Safe PTN transfer function, just in case if rounding error causes pool to not have enough PTNs.
-     * @param _to The PTN receiver address.
-     * @param _amount of PTN to transfer.
-     */
-    function safePtnTransfer(address _to, uint256 _amount) internal {
-        uint256 ptnBal = ptn.balanceOf(address(this));
-        if (_amount > ptnBal) {
-            TransferHelper.safeTransfer(address(ptn), _to, ptnBal);
-        } else {
-            TransferHelper.safeTransfer(address(ptn), _to, _amount);
-        }
     }
 
     /** 

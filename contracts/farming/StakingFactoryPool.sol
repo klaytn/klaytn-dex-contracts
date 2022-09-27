@@ -206,7 +206,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         if (amountToTransfer > 0) {
             TransferHelper.safeTransfer(
                 pool.stakedToken,
-                address(msg.sender),
+                msg.sender,
                 amountToTransfer
             );
         }

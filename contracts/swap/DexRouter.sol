@@ -437,7 +437,7 @@ contract DexRouter is IDexRouter {
     ) internal virtual {
         if(_to == address(0)) revert InvalidAddressParameters("DexRouter: SWAP_TO_ZERO_ADDRESS");
         uint256 length = path.length - 1;
-        for (uint256 i; i < length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = DexLibrary.sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
@@ -699,7 +699,7 @@ contract DexRouter is IDexRouter {
         address _to
     ) internal virtual {
         if(_to == address(0)) revert InvalidAddressParameters("DexRouter: SWAP_TO_ZERO_ADDRESS");
-        for (uint256 i; i < path.length - 1; i++) {
+        for (uint256 i = 0; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = DexLibrary.sortTokens(input, output);
             IDexPair pair = IDexPair(

@@ -78,7 +78,7 @@ describe('DexFactory', () => {
   it('createPair:gas [ @skip-on-coverage ]', async () => {
     const tx = await factory.createPair(...TEST_ADDRESSES);
     const receipt = await tx.wait();
-    expect(receipt.gasUsed).to.eq(2206107);
+    expect(receipt.gasUsed).to.eq(2198483);
   });
 
   it('setFeeTo', async () => {

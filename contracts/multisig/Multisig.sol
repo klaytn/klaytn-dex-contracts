@@ -101,6 +101,7 @@ contract MultiSigWallet {
         for (uint256 i = 0; i < _owners.length; i++) {
             require(_owners[i] != address(0) && owners.add(_owners[i]));
             ownerRegistrationTime[_owners[i]] = block.timestamp;
+            emit OwnerAddition(_owners[i]);
         }
         required = _required;
     }
@@ -113,19 +114,18 @@ contract MultiSigWallet {
     function addOwner(address owner)
         public
         onlyWallet
-        ownerDoesNotExist(owner)
         notNull(owner)
         validRequirement(owners.length() + 1, required)
     {
-        owners.add(owner);
+        require(owners.add(owner));
         ownerRegistrationTime[owner] = block.timestamp;
         emit OwnerAddition(owner);
     }
 
     /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner.
-    function removeOwner(address owner) public onlyWallet ownerExists(owner) {
-        owners.remove(owner);
+    function removeOwner(address owner) public onlyWallet {
+        require(owners.remove(owner));
         if (required > owners.length()) changeRequirement(owners.length());
         emit OwnerRemoval(owner);
     }
@@ -136,12 +136,11 @@ contract MultiSigWallet {
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
-        ownerExists(owner)
-        ownerDoesNotExist(newOwner)
+        notNull(newOwner)
     {
-        require(newOwner != address(0), "Invalid newOwner address");
-        owners.remove(owner);
-        owners.add(newOwner);
+        require(owner != newOwner);
+        require(owners.remove(owner));
+        require(owners.add(newOwner));
         ownerRegistrationTime[newOwner] = block.timestamp;
         emit OwnerRemoval(owner);
         emit OwnerAddition(newOwner);
@@ -169,12 +168,12 @@ contract MultiSigWallet {
         bytes calldata data
     ) public returns (uint256 transactionId) {
         transactionId = addTransaction(destination, value, data);
-        confirmTransaction(transactionId);
+        confirmAndExecuteTransaction(transactionId);
     }
 
     /// @dev Allows an owner to confirm a transaction.
     /// @param transactionId Transaction ID.
-    function confirmTransaction(uint256 transactionId)
+    function confirmAndExecuteTransaction(uint256 transactionId)
         public
         ownerExists(msg.sender)
         transactionExists(transactionId)
@@ -185,10 +184,9 @@ contract MultiSigWallet {
             "The owner is registered after the transaction is submitted"
         );
         require(
-            !transactions[transactionId].confirmations.contains(msg.sender),
+            transactions[transactionId].confirmations.add(msg.sender),
             "Already confirmed"
         );
-        transactions[transactionId].confirmations.add(msg.sender);
         emit Confirmation(msg.sender, transactionId);
         executeTransaction(transactionId);
     }
@@ -201,10 +199,9 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         require(
-            transactions[transactionId].confirmations.contains(msg.sender),
+            transactions[transactionId].confirmations.remove(msg.sender),
             "Not confirmed"
         );
-        transactions[transactionId].confirmations.remove(msg.sender);
         emit Revocation(msg.sender, transactionId);
     }
 
@@ -272,10 +269,8 @@ contract MultiSigWallet {
         view
         returns (bool confirmed_)
     {
-        confirmed_ = transactions[transactionId].confirmations.length() >=
-            required
-            ? true
-            : false;
+        confirmed_ =
+            transactions[transactionId].confirmations.length() >= required;
     }
 
     /*

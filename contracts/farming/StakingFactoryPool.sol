@@ -213,7 +213,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
             );
         }
 
-        emit EmergencyWithdraw(msg.sender, user.amount);
+        emit EmergencyWithdraw(msg.sender, amountToTransfer);
     }
 
     /**

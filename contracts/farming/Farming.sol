@@ -85,6 +85,8 @@ contract Farming is Ownable, ReentrancyGuard {
         uint256 _startBlock,
         address _multisig
     ) {
+        require(_ptn != address(0), "PTN cannot be the zero address");
+        require(_multisig != address(0), "Multisig cannot be the zero address");
         ptn = IPlatformToken(_ptn);
         ptnPerBlock = _ptnPerBlock;
         startBlock = _startBlock;
@@ -100,6 +102,7 @@ contract Farming is Ownable, ReentrancyGuard {
         public
         onlyOwner
     {
+        require(_pid < poolInfo.length, "Pool does not exist");
         updatePool(_pid);
         poolInfo[_pid].bonusMultiplier = _multiplier.toUint32();
         emit UpdatePoolMultiplier(_pid, _multiplier);
@@ -198,6 +201,7 @@ contract Farming is Ownable, ReentrancyGuard {
         uint256 _allocPoint,
         bool _withUpdate
     ) public onlyOwner {
+        require(_pid < poolInfo.length, "Pool does not exist");
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -256,6 +260,7 @@ contract Farming is Ownable, ReentrancyGuard {
      * @param _amount Amount of LP tokens to deposit.
      */
     function deposit(uint256 _pid, uint256 _amount) external nonReentrant {
+        require(_pid < poolInfo.length, "Pool does not exist");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
@@ -286,6 +291,7 @@ contract Farming is Ownable, ReentrancyGuard {
      * @param _amount Amount of LP tokens to withdraw.
      */
     function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
+        require(_pid < poolInfo.length, "Pool does not exist");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -324,6 +330,7 @@ contract Farming is Ownable, ReentrancyGuard {
     * @param _pid The id of the pool. See `poolInfo`.
     */
     function emergencyWithdraw(uint256 _pid) public nonReentrant {
+        require(_pid < poolInfo.length, "Pool does not exist");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -346,6 +353,7 @@ contract Farming is Ownable, ReentrancyGuard {
         view
         returns (uint256)
     {
+        require(_pid < poolInfo.length, "Pool does not exist");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accPtnPerShare = pool.accPtnPerShare;

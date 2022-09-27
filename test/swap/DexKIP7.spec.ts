@@ -113,10 +113,10 @@ describe('DexKIP7', () => {
     await expect(token['safeTransferFrom(address,address,uint256)'](wallet.address, other.address, TEST_AMOUNT))
       .to.be.revertedWith('KIP7: insufficient allowance');
     await expect(token['safeTransferFrom(address,address,uint256)'](constants.AddressZero, other.address, TEST_AMOUNT))
-      .to.be.revertedWith('KIP7: transfer from the zero address');
-    await expect(token['safeTransferFrom(address,address,uint256)'](wallet.address, constants.AddressZero, TEST_AMOUNT))
-      .to.be.revertedWith('KIP7: transfer to the zero address');
+      .to.be.revertedWith('KIP7: insufficient allowance');
     await token.approve(other.address, constants.MaxUint256);
+    await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, constants.AddressZero, TEST_AMOUNT))
+      .to.be.revertedWith('KIP7: transfer to the zero address');
     await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, token.address, TEST_AMOUNT))
       .to.be.rejectedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
   });

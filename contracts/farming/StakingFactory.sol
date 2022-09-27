@@ -9,6 +9,7 @@ contract StakingFactory is Ownable {
     event NewStakingContract(address indexed staking);
 
     constructor(address _multisig) {
+        require(_multisig != address(0), "Multisig cannot be the zero address");
         // Transfer ownership to the multisig contract who becomes the owner of the contract
         transferOwnership(_multisig);
     }
@@ -36,6 +37,7 @@ contract StakingFactory is Ownable {
         uint256 _numberBlocksForUserLimit,
         address _multisig
     ) external onlyOwner returns (address staking) {
+        require(_multisig != address(0), "Multisig cannot be the zero address");
         require(IKIP7(_stakedToken).totalSupply() >= 0);
         require(IKIP7(_rewardToken).totalSupply() >= 0);
         require(_stakedToken != _rewardToken, "Tokens must be be different");

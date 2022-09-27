@@ -40,9 +40,21 @@ contract DexFactory is IDexFactory {
         uint256
     );
 
+    /**
+     * @dev Emitted each time when the recipient of the protocol-wide charge changes via `setFeeTo`.
+     */
+    event FeeToChanged (address newFeeTo);
+
+    /**
+     * @dev Emitted once in the constructor during the deploy 
+     * and each time when the address allowed to change `feeTo` changes via `setFeeToSetter`.
+     */
+    event FeeToSetterChanged (address newFeeToSetter);
+
     constructor(address _feeToSetter) {
         if (_feeToSetter == address(0)) revert InvalidAddressParameters("DEX: SETTER_ZERO_ADDRESS");
         feeToSetter = _feeToSetter;
+        emit FeeToSetterChanged(feeToSetter);
     }
 
     /// @notice Returns the total number of pairs created through the factory so far.
@@ -88,6 +100,7 @@ contract DexFactory is IDexFactory {
     function setFeeTo(address _feeTo) external {
         if (msg.sender != feeToSetter) revert Unauthorized();
         feeTo = _feeTo;
+        emit FeeToChanged(feeTo);
     }
 
     /**
@@ -99,5 +112,6 @@ contract DexFactory is IDexFactory {
         if (_feeToSetter == address(0)) revert InvalidAddressParameters("DEX: SETTER_ZERO_ADDRESS");
         if (msg.sender != feeToSetter) revert Unauthorized();
         feeToSetter = _feeToSetter;
+        emit FeeToSetterChanged(feeToSetter);
     }
 }

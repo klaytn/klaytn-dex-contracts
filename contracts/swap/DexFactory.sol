@@ -41,6 +41,7 @@ contract DexFactory is IDexFactory {
     );
 
     constructor(address _feeToSetter) {
+        if (_feeToSetter == address(0)) revert InvalidAddressParameters("DEX: SETTER_ZERO_ADDRESS");
         feeToSetter = _feeToSetter;
     }
 
@@ -95,6 +96,7 @@ contract DexFactory is IDexFactory {
      * @param _feeToSetter The new address which would be allowed to set the protocol-wide charge.
     */
     function setFeeToSetter(address _feeToSetter) external {
+        if (_feeToSetter == address(0)) revert InvalidAddressParameters("DEX: SETTER_ZERO_ADDRESS");
         if (msg.sender != feeToSetter) revert Unauthorized();
         feeToSetter = _feeToSetter;
     }

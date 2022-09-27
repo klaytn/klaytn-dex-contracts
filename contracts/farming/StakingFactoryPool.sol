@@ -91,6 +91,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     ) external {
         require(!pool.isInitialized, "Already initialized");
         require(msg.sender == STAKING_FACTORY, "Not factory");
+        require(_startBlock < _rewardEndBlock, "Invalid start block");
 
         // Make this contract initialized
         pool.isInitialized = true;
@@ -222,6 +223,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
      * @param _recipient: A wallet's address to trasfer tokens to
      */
     function emergencyRewardWithdraw(uint256 _amount, address _recipient) external onlyOwner {
+        require(_recipient != address(0), "Withdraw to the zero address");
         TransferHelper.safeTransfer(pool.rewardToken, _recipient, _amount);
     }
 
@@ -232,6 +234,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
      * @dev Callable by multisig contract
      */
     function recoverToken(address _token, address _recipient) external onlyOwner {
+        require(_recipient != address(0), "Recover to the zero address");
         require(
             _token != pool.stakedToken,
             "Operations: Cannot recover staked token"

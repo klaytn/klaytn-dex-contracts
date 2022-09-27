@@ -123,6 +123,8 @@ contract DexKIP7 is IDexKIP7, KIP13 {
      * - `from` must have a balance of at least `amount`.
      */
     function _transfer(address from, address to, uint amount) private {
+        require(from != address(0), "KIP7: transfer from the zero address");
+        require(to != address(0), "KIP7: transfer to the zero address");
         uint256 fromBalance = balanceOf[from];
         require(fromBalance >= amount, "KIP7: transfer amount exceeds balance");
         unchecked {
@@ -155,7 +157,10 @@ contract DexKIP7 is IDexKIP7, KIP13 {
     function transferFrom(address from, address to, uint amount) external returns (bool) {
         uint currentAllowance = allowance[from][msg.sender];
         if (currentAllowance != type(uint).max) {
-            allowance[from][msg.sender] = currentAllowance - amount;
+            require(currentAllowance >= amount, "KIP7: insufficient allowance");
+            unchecked {
+                allowance[from][msg.sender] = currentAllowance - amount;
+            }
         }
         _transfer(from, to, amount);
         return true;
@@ -172,7 +177,6 @@ contract DexKIP7 is IDexKIP7, KIP13 {
     * @dev Moves `amount` tokens from the caller's account to `recipient`.
     */
     function safeTransfer(address recipient, uint256 amount, bytes memory data) public {
-        require(recipient != address(0), "KIP7: transfer to the zero address");
         _transfer(msg.sender, recipient, amount);
         require(_checkOnKIP7Received(msg.sender, recipient, amount, data), "KIP7: transfer to non KIP7Receiver implementer");
     }
@@ -190,13 +194,12 @@ contract DexKIP7 is IDexKIP7, KIP13 {
     * `amount` is then deducted from the caller's allowance.
     */
     function safeTransferFrom(address sender, address recipient, uint256 amount, bytes memory data) public {
-        require(sender != address(0), "KIP7: transfer from the zero address");
-        require(recipient != address(0), "KIP7: transfer to the zero address");
-
         uint currentAllowance = allowance[sender][msg.sender];
         if (currentAllowance != type(uint).max) {
             require(currentAllowance >= amount, "KIP7: insufficient allowance");
-            allowance[sender][msg.sender] = currentAllowance - amount;
+            unchecked {
+                allowance[sender][msg.sender] = currentAllowance - amount;
+            }
         }
         _transfer(sender, recipient, amount);
         require(_checkOnKIP7Received(sender, recipient, amount, data), "KIP7: transfer to non KIP7Receiver implementer");

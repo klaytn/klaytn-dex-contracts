@@ -135,6 +135,7 @@ contract MultiSigWallet {
         ownerExists(owner)
         ownerDoesNotExist(newOwner)
     {
+        require(newOwner != address(0), "Invalid newOwner address");
         owners.remove(owner);
         owners.add(newOwner);
         emit OwnerRemoval(owner);

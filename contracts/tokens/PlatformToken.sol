@@ -3,8 +3,9 @@ pragma solidity =0.8.12;
 
 import "@klaytn/contracts/KIP/token/KIP7/extensions/KIP7Votes.sol";
 import "@klaytn/contracts/KIP/access/KAccessControl.sol";
+import '../interfaces/IPlatformToken.sol';
 
-contract PlatformToken is KAccessControl, KIP7Votes {
+contract PlatformToken is KAccessControl, KIP7Votes, IPlatformToken {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
@@ -13,6 +14,7 @@ contract PlatformToken is KAccessControl, KIP7Votes {
         string memory _symbol,
         address _multisig
     ) KIP7(_name, _symbol) KIP7Permit(_name) {
+        require(_multisig != address(0), "Multisig cannot be the zero address");
         _grantRole(DEFAULT_ADMIN_ROLE, _multisig);
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -30,6 +32,7 @@ contract PlatformToken is KAccessControl, KIP7Votes {
         return
             interfaceId == type(IKIP7Permit).interfaceId ||
             interfaceId == type(IVotes).interfaceId ||
+            interfaceId == type(IPlatformToken).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 

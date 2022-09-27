@@ -325,7 +325,7 @@ contract Farming is Ownable, ReentrancyGuard {
         user.amount = 0;
         user.rewardDebt = 0;
 
-        IKIP7(pool.lpToken).safeTransfer(msg.sender, oldUserAmount);
+        TransferHelper.safeTransfer(pool.lpToken, msg.sender, oldUserAmount);
         emit EmergencyWithdraw(msg.sender, _pid, oldUserAmount);
     }
 

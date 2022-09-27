@@ -38,8 +38,8 @@ contract StakingFactory is Ownable {
         address _multisig
     ) external onlyOwner returns (address staking) {
         require(_multisig != address(0), "Multisig cannot be the zero address");
-        require(IKIP7(_stakedToken).totalSupply() >= 0);
-        require(IKIP7(_rewardToken).totalSupply() >= 0);
+        require(IKIP7(_stakedToken).totalSupply() > 0);
+        require(IKIP7(_rewardToken).totalSupply() > 0);
         require(_stakedToken != _rewardToken, "Tokens must be be different");
 
         staking = address(

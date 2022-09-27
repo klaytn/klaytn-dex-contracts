@@ -19,7 +19,7 @@ library DexLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'484738ab07073768a32245eac9eaa01cb473c87bfe3766d060b75bbce2ea24c6' // init code hash
+                hex'46bc6fca418146f6b9557db8ac4defaf30e47477c99e2099a2aab19c5d88ccb2' // init code hash
             )))));
     }
 
@@ -62,7 +62,7 @@ library DexLibrary {
         require(length >= 2, 'DexLibrary: INVALID_PATH');
         amounts = new uint[](length);
         amounts[0] = amountIn;
-        for (uint i; i < length - 1; i++) {
+        for (uint i = 0; i < length - 1; i++) {
             (uint reserveIn, uint reserveOut) = getReserves(factory, path[i], path[i + 1]);
             amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
         }

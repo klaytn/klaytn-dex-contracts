@@ -793,7 +793,7 @@ describe('DexRouter', () => {
         },
       );
       const receipt = await tx.wait();
-      expect(receipt.gasUsed).to.eq(104379);
+      expect(receipt.gasUsed).to.be.approximately(104314, 100);
     }).retries(3);
   });
 
@@ -910,7 +910,7 @@ describe('DexRouter', () => {
         constants.MaxUint256,
       );
       const receipt = await tx.wait();
-      expect(receipt.gasUsed).to.eq(101597);
+      expect(receipt.gasUsed).to.eq(101682);
     }).retries(3);
   });
 

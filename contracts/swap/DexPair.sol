@@ -102,7 +102,7 @@ contract DexPair is IDexPair, DexKIP7 {
         uint112 _reserve1
     ) private {
         if (balance0 > type(uint112).max || balance1 > type(uint112).max) revert Overflow();
-        uint32 blockTimestamp = uint32(block.timestamp % 2**32);
+        uint32 blockTimestamp = uint32(block.timestamp);
         unchecked {
             uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
             if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {

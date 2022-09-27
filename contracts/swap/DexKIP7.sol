@@ -16,13 +16,11 @@ contract DexKIP7 is IDexKIP7, KIP13 {
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
 
-    // Equals to `bytes4(keccak256("onKIP7Received(address,address,uint256,bytes)"))`
-    // which can be also obtained as `IKIP7Receiver(0).onKIP7Received.selector`
-    bytes4 private constant _KIP7_RECEIVED = 0x9d188c22;
+    // Can be also obtained as `IKIP7Receiver(0).onKIP7Received.selector`
+    bytes4 private constant _KIP7_RECEIVED = bytes4(keccak256("onKIP7Received(address,address,uint256,bytes)"));
 
     bytes32 public immutable DOMAIN_SEPARATOR;
-    // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-    bytes32 public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+    bytes32 public constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     mapping(address => uint) public nonces;
 
     constructor() {

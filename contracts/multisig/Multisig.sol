@@ -31,6 +31,7 @@ contract MultiSigWallet {
      */
     mapping(uint256 => Transaction) private transactions;
     EnumerableSet.AddressSet private owners;
+    mapping(address => uint256) public ownerRegistrationTime;
     uint256 public required;
     uint256 public transactionCount;
 
@@ -38,6 +39,7 @@ contract MultiSigWallet {
         address destination;
         uint256 value;
         bytes data;
+        uint256 timestamp;
         bool executed;
         EnumerableSet.AddressSet confirmations;
     }
@@ -98,6 +100,7 @@ contract MultiSigWallet {
     {
         for (uint256 i = 0; i < _owners.length; i++) {
             require(_owners[i] != address(0) && owners.add(_owners[i]));
+            ownerRegistrationTime[_owners[i]] = block.timestamp;
         }
         required = _required;
     }
@@ -115,6 +118,7 @@ contract MultiSigWallet {
         validRequirement(owners.length() + 1, required)
     {
         owners.add(owner);
+        ownerRegistrationTime[owner] = block.timestamp;
         emit OwnerAddition(owner);
     }
 
@@ -138,6 +142,7 @@ contract MultiSigWallet {
         require(newOwner != address(0), "Invalid newOwner address");
         owners.remove(owner);
         owners.add(newOwner);
+        ownerRegistrationTime[newOwner] = block.timestamp;
         emit OwnerRemoval(owner);
         emit OwnerAddition(newOwner);
     }
@@ -174,6 +179,11 @@ contract MultiSigWallet {
         ownerExists(msg.sender)
         transactionExists(transactionId)
     {
+        require(
+            ownerRegistrationTime[msg.sender] <
+                transactions[transactionId].timestamp,
+            "The owner is registered after the transaction is submitted"
+        );
         require(
             !transactions[transactionId].confirmations.contains(msg.sender),
             "Already confirmed"
@@ -286,6 +296,7 @@ contract MultiSigWallet {
         newTransaction.destination = destination;
         newTransaction.value = value;
         newTransaction.data = data;
+        newTransaction.timestamp = block.timestamp;
         newTransaction.executed = false;
         transactionCount += 1;
         emit Submission(transactionId);
@@ -365,6 +376,7 @@ contract MultiSigWallet {
             address destination_,
             uint256 value_,
             bytes memory data_,
+            uint256 timestamp_,
             bool executed_,
             uint256 votesLength_
         )
@@ -373,6 +385,7 @@ contract MultiSigWallet {
         value_ = transaction.value;
         destination_ = transaction.destination;
         data_ = transaction.data;
+        timestamp_ = transaction.timestamp;
         executed_ = transaction.executed;
         votesLength_ = transaction.confirmations.length();
     }

@@ -696,6 +696,8 @@ Long-term staking allows users to stake the Dex token and earn other tokens as r
 
 The contract deploys a new staking pool contract using [`deployPool`](#deploypool). The created contract is owned by the [`multisig` contract](#multisignature-wallet).
 
+The `StakingFactory` contract is responsible for deploying new [`StakingInitializable`](#stakinginitializable) contracts. The factory fully initializes the new pool contract after its deployment in `deployPool`, but the reward tokens **have to be sent** to the initialized pool **manually**.
+
 ##### `deployPool`
 
 The contract for the new staking pool is deployed using `StakingInitializable` contract based on the following:
@@ -705,14 +707,16 @@ The contract for the new staking pool is deployed using `StakingInitializable` c
 - reward per block (in reward tokens)
 - the start and end blocks
 - the pool limit per user (in staked tokens)
-- the multisig address
 - the limit of the number of blocks available for a user
+- the multisig address
 
 The function returns the address of a new staking pool contract.
 
 #### `StakingInitializable`
 
-The staking factory contract (`StakingFactory`) deploys the `StakingInitializable` contract when a new staking pool is deployed. This contract initializes a new pool.
+The staking factory contract (`StakingFactory`) deploys the `StakingInitializable` contract, which is a new staking pool. Staking factory initializes the pool after it is deployed in the `deployPool` function.
+
+Note that the reward tokens have to be sent **manually** after the deployment. If the reward tokens are not sent to the pool before `startBlock`, the `deposit` and `withdraw` functions will not work correctly on the pool. In this case, each user will be able to deposit only once since they do not have available rewards yet. After that, `deposit` and `withdraw` functions will fail with `TransferHelper: TRANSFER_FAILED`. So the reward tokens have to be sent to the pool in the time between after it gets deployed and before the `startBlock` (the block when the pool starts).
 
 The contract defines two structures: 
 - [`UserInfo`](#staking-userinfo) contains information about each user that stakes tokens

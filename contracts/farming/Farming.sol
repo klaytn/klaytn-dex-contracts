@@ -149,21 +149,17 @@ contract Farming is Ownable, ReentrancyGuard {
      * @dev Can only be called by the multisig contract.
      * @param _allocPoint Number of allocation points for the new pool.
      * @param _lpToken Address of the LP KIP7 token.
-     * @param _withUpdate Whether call "massUpdatePools" operation.
      * @param _bonusMultiplier  The pool reward multipler.
      */
     function add(
         uint256 _allocPoint,
         address _lpToken,
-        bool _withUpdate,
         uint256 _bonusMultiplier,
         uint256 _bonusEndBlock
     ) public onlyOwner {
         require(_lpToken != address(ptn), "Can't stake reward token");
         require(addedTokens[_lpToken] == false, "Token already added");
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+        massUpdatePools();
         uint256 lastRewardBlock = block.number > startBlock
             ? block.number
             : startBlock;
@@ -194,17 +190,13 @@ contract Farming is Ownable, ReentrancyGuard {
      * @dev Can only be called by the multisig contract.
      * @param _pid The id of the pool. See `poolInfo`.
      * @param _allocPoint New number of allocation points for the pool.
-     * @param _withUpdate Whether call "massUpdatePools" operation.
      */
     function set(
         uint256 _pid,
-        uint256 _allocPoint,
-        bool _withUpdate
+        uint256 _allocPoint
     ) public onlyOwner {
         require(_pid < poolInfo.length, "Pool does not exist");
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+        massUpdatePools();
         uint256 prevAllocPoint = poolInfo[_pid].allocPoint;
         if (prevAllocPoint != _allocPoint) {
             poolInfo[_pid].allocPoint = _allocPoint.toUint64();

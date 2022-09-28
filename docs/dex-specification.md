@@ -207,13 +207,13 @@ The contract also manages protocol-wide charge recipient. The `feeTo` defines th
 
 <!-- github table -->
 
-|          Function           |                                Description                                |
-| --------------------------- | ------------------------------------------------------------------------- |
-| [`createPair`](#createpair) | Create a pair for two given tokens if such a pair doesn't already exist.  |
-| `getPair`                   | Return the address of the pair for two given tokens if such a pair exist. |
-| `setFeeToSetter`            | Set the new address of the protocol-wide charge recipient.                |
-| `setFeeTo`                  | Allow a provided address to control protocol-wide charge recipients.      |
-| `allPairsLength`            | Return the number of created pairs.                                       |
+|          Function           |                                                                                                                                                           Description                                                                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`createPair`](#createpair) | Create a pair for two given tokens if such a pair doesn't already exist.                                                                                                                                                                                                                                                        |
+| `getPair`                   | Return the address of the pair for two given tokens if such a pair exist.                                                                                                                                                                                                                                                       |
+| `setFeeToSetter`            | Set the address which is allowed to control protocol-wide charge recipients (`feeTo` addresses). Note that a mistake in the address results in the loss of control over the fee destination as the `feeToSetter` address controls protocol-wide charge recipients.                                                              |
+| `setFeeTo`                  | Allow a provided address to control protocol-wide charge recipients. `setFeeTo` сan only be called by the `feeToSetter`, which sets a new address of the protocol-wide charge recipient. Setting the wrong address in the `setFeeTo` function leads to the protocol-wide charge being lost (transferred to that wrong address). |
+| `allPairsLength`            | Return the number of created pairs.                                                                                                                                                                                                                                                                                             |
 
 
 <!-- pdf table
@@ -221,10 +221,23 @@ The contract also manages protocol-wide charge recipient. The `feeTo` defines th
 Function                    Description
 --------------------------- -------------------------------------------------------------------------
 [`createPair`](#createpair) Create a pair for two given tokens if such a pair doesn't already exist.  
+
 `getPair`                   Return the address of the pair for two given tokens if such a pair exist.
-`setFeeToSetter`            Set the new address of the protocol-wide charge recipient.               
-`setFeeTo`                  Allow a provided address to control protocol-wide charge recipients.     
+
+`setFeeToSetter`            Set the address which is allowed to control protocol-wide charge
+                            recipients (`feeTo` addresses). Note that a mistake in the address
+                            results in the loss of control over the fee destination as the
+                            `feeToSetter` address controls protocol-wide charge recipients.
+
+`setFeeTo`                  Allow a provided address to control protocol-wide charge recipients.
+                            `setFeeTo` сan only be called by the `feeToSetter`, which sets a new
+                            address of the protocol-wide charge recipient.
+                            Setting the wrong address in the `setFeeTo` function leads to the
+                            protocol-wide charge being lost (transferred to that wrong address).
+
 `allPairsLength`            Return the number of created pairs.                                      
+
+--------------------------- -------------------------------------------------------------------------
 
 -->
 

@@ -131,6 +131,16 @@ Token swaps in Dex are a simple way to trade one ERC-20 or KIP7 token for anothe
 
 The [`DexPair`](#dexpair) contract defines the low-level swap function, while the [`DexRouter`](#dexrouter) contract performs the swap operation.
 
+#### `DEXswap`
+
+While DEX contracts ([`DexPair`](#dexpair), [`DexRouter`](#dexrouter), [`Farming`](#farming), [`StakingFactoryPool`](#stakinginitializable), [`StakingFactoty`](#stakingfactory)) do not use `safeTransfer` or `safeTransferFrom` functions from the `DEXswap` token, the `DEXswap` token (its `safeTransfer` and `safeTransferFrom` functions) can be used separately by any user to send tokens to other contracts.
+
+**Warning**: This can lead to re-entrancy attacks from contracts which are not handled by DEX.
+
+The `safeTransfer` and `safeTransferFrom` invoke external call `onKIP7Received` on the recipient address in the `_checkOnKIP7Received` function to verify if the recipient address is a `KIP7Receiver`. This `onKIP7Received(recipient)` call is a weak place. Since it is an external call to an unknown contract, where the recipient contract may define any arbitrary logic to be executed, it is possible to re-enter functions through the use of `safeTransfer` and `safeTransferFrom`.
+
+Users should check the recipient address thoroughly if they want to use these functions. They should check that it doesn't look suspicious to them and doesn't have any malicious code (unverified contracts).
+
 ### Liquidity Pool
 
 Liquidity pools are smart contracts that hold balances of two unique tokens and enforce rules on depositing and withdrawing them. See [Farming and Staking](#farming-and-staking) for more details.
@@ -339,6 +349,8 @@ The swap operation functions in such a way that the tokens must be transferred t
 
 Refer to [`DexRouter` contract](#swapping-tokens) for more details on how swap works.
 
+**Warning**: `DEXswap` token (its `safeTransfer` and `safeTransferFrom` functions) can be used by any user to send tokens to other contracts. This can lead to re-entrancy attacks from contracts which are not handled by DEX. Refer to [`DEXswap`](#dexswap) for details.
+
 ### Periphery
 
 Periphery smart contracts are designed to support domain-specific interactions with the [core](#core). These are external smart contracts that are useful, but not required for Dex to exist. New periphery contracts can always be deployed without migrating liquidity.
@@ -403,6 +415,8 @@ The swap operation functions in such a way that the tokens must be transferred t
 The pairs check the balances of their tokens at the end of every interaction. Then, at the beginning of the next interaction, current balances are compared against the stored values to determine the amount of tokens that were sent by the current interactor.
 
 One of the input parameters for swap functions is an array of token addresses (`path`) such as that for each consecutive pair of addresses, the pair contract should exist with enough liquidity. The first element is the input token, the last element is the output token. If there is no pair contract for the input and output tokens, then the `path` defines the intermediate pairs to perform the swap operation on.
+
+**Warning**: `DEXswap` token (its `safeTransfer` and `safeTransferFrom` functions) can be used by any user to send tokens to other contracts. This can lead to re-entrancy attacks from contracts which are not handled by DEX. Refer to [`DEXswap`](#dexswap) for details.
 
 #### `DexLibrary`
 

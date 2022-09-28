@@ -71,9 +71,12 @@ This document provides detailed specification for the Dex smart contracts, discu
       - [Staking: Functions](#staking-functions)
         - [Staking: `_getMultiplier`](#staking-_getmultiplier)
         - [Staking: `_updatePool`](#staking-_updatepool)
-  - [`AccessControl`](#accesscontrol)
-    - [Roles](#roles)
-      - [Admin role](#admin-role)
+  - [Access](#access)
+    - [`Ownable`](#ownable)
+      - [`Ownable`: Functions](#ownable-functions)
+    - [`AccessControl`](#accesscontrol)
+      - [Roles](#roles)
+        - [Admin role](#admin-role)
 - [Security Concerns](#security-concerns)
 - [Calculations](#calculations)
 - [Diagrams](#diagrams)
@@ -793,19 +796,45 @@ The function updates the reward variables for the given pool. If the current blo
 
 Refer to [reward debt and pending reward](#staking-reward-debt-and-pending-reward) for more information.
 
-### `AccessControl`
+### Access
+
+[`Ownable`](#ownable) and [`AccessControl`](#accesscontrol) contracts regulate ownership and role-base access to DEX functionality.
+
+#### `Ownable`
+
+The `Ownable` contract provides basic access control mechanism: granting accounts exclusive access to specific functions. The account that was granted such exclusive access becomes an **owner** of the specified functionality.
+
+By default, the owner is the account that deploys the contract. The ownership can later be transferred to another account with `transferOwnership`.
+
+##### `Ownable`: Functions
+
+The `Ownable` contract has the following functions:
+
+|      Function       |                                                Description                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `owner`             | Return the address of the current owner.                                                                   |
+| `renounceOwnership` | Leave the contract without an owner. Can only be called by the current owner.                              |
+| `transferOwnership` | Transfer ownership of the contract to a new account (`newOwner`). Can only be called by the current owner. |
+
+**Warning**: Renouncing ownership (`renounceOwnership`) leaves the contract without an owner, thereby removing any functionality that is only available to the owner. It will no longer be possible to call `onlyOwner` and all the functions associated with the owner role.
+
+**Warning**: `TransferOwnership` should also be handled carefully. Transferring ownership to the wrong address (e.g. zero address) would also lead to all owner associated functionality being inaccessible.
+
+#### `AccessControl`
 
 The `AccessControl` contract implements role-based access.
 
 <!-- github table  -->
 
-|    Function    |                                                                                 Description                                                                                 |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hasRole`      | Check if an account has been granted the specified role.                                                                                                                    |
-| `getRoleAdmin` | Return the admin role that controls the specified role.                                                                                                                     |
-| `grantRole`    | Grant the specified role to an account. The caller has to have the admin role.                                                                                              |
-| `revokeRole`   | Revoke the specified role from an account. The caller has to have the admin role.                                                                                           |
-| `renounceRole` | Revoke the specified role from the calling account. This a mechanism for accounts to lose their privileges if they are compromised, e.g. if a trusted device was misplaced. |
+|    Function    |                                                                                        Description                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `hasRole`      | Check if an account has been granted the specified role.                                                                                                                                   |
+| `getRoleAdmin` | Return the admin role that controls the specified role.                                                                                                                                    |
+| `grantRole`    | Grant the specified role to an account. The caller has to have the admin role.                                                                                                             |
+| `revokeRole`   | Revoke the specified role from an account. The caller has to have the admin role. Note that the admin can revoke their own role. If this happens, DEX operator losses control over DEX. |
+| `renounceRole` | Revoke the specified role from the calling account. This a mechanism for accounts to lose their privileges if they are compromised, e.g. if a trusted device was misplaced.                |
+
+
 
 <!-- pdf table 
 
@@ -819,6 +848,8 @@ Function        Description
 `grantRole`     Grant the specified role to an account. The caller has to have the admin role.
 
 `revokeRole`    Revoke the specified role from an account. The caller has to have the admin role.
+                Note that the admin can revoke their own role. If this happens,
+                DEX operator losses control over DEX.
 
 `renounceRole`  Revoke the specified role from the calling account.
                 This a mechanism for accounts to lose their privileges if they are compromised,
@@ -827,7 +858,7 @@ Function        Description
 
 -->
 
-#### Roles
+##### Roles
 
 Roles are referred to by their `bytes32` identifier. These should be exposed in the external API and be unique. The best way to achieve this is by using `public constant` hash digests:
 
@@ -846,11 +877,15 @@ function foo() public {
 
 Roles can be granted and revoked dynamically via the `grantRole` and `revokeRole` functions. Each role has an associated admin role, and only accounts that have the admin role can call `grantRole` and `revokeRole`.
 
-##### Admin role
+###### Admin role
 
 By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which means that only accounts with this role will be able to grant or revoke other roles. More complex role relationships can be created by using `_setRoleAdmin`.
 
 The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission to grant and revoke this role.
+
+**Warning**: With `revokeRole`, the admin can revoke their own role (any granted role). This leads to all functionality associated with the said role being inaccessible. For example, revoking or renouncing `MINTER_ROLE` makes all associated minting functionality inaccessible.
+
+**Warning**: Renouncing or revoking `DEFAULT_ADMIN_ROLE` role leads to the admin no longer being able to grant or revoke any other roles.
 
 ## Security Concerns
 

@@ -255,6 +255,14 @@ Each Dex smart contract for the token pair manages a [liquidity pool](#liquidity
 
 The contract holds the following information in the variables: the reserves for both tokens, the timestamp of the latest block, the latest cumulative prices of both tokens, and the value of the `k` [invariant](#invariant) for the pair of tokens calculated as the product of both reserves.
 
+##### Year 2038 Problem <!--omit in toc-->
+
+Pair contracts have a [Year 2038 Problem](https://en.wikipedia.org/wiki/Year_2038_problem). This is due to the `_update` function (used to update reserves and price accumulators) casting the `block.timestamp` to `uint32`, which will wrap around in the year 2038.
+
+This only affects the `price0CumulativeLast` and `price1CumulativeLast` variables (latest cumulative prices of tokens in the pair), which are used for external price reporting. 
+
+This is not detrimental to the DEX functionality. Pair contracts are still going to work after year 2038, but will contain a bug reporting wrong cumulative prices. Other smart contracts relying on this price reporting functionality would not function correctly after the year 2038.
+
 ##### Pair Contract: Events
 
 - When liquidity tokens are created via [`mint`](#mint), `Mint` event is emitted with the information about the sender address and the amount of each token in a token pair.

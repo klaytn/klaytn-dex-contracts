@@ -39,8 +39,8 @@ contract DexPair is IDexPair, DexKIP7 {
     }
     /** 
     * @notice Returns the reserves of token0 and token1 used to price 
-    * trades and distribute liquidity. Also returns the block.timestamp (mod 2**32) 
-    * of the last block during which an interaction occured for the pair.
+    * trades and distribute liquidity. Also returns the uint32(block.timestamp)
+    * of the last block during which an interaction occurred for the pair.
     */
     function getReserves()
         public
@@ -205,7 +205,7 @@ contract DexPair is IDexPair, DexKIP7 {
     * @param amount1Out Amount of token1 to be sent to the `to` recipient.
     * @param to Address of tokens recipient. If data.length is greater than 0, the contract transfers the 
     * tokens and then calls the `uniswapV2Call` callback function on the `to` address
-    * @param data Arbitary length data to be passed to the `uniswapV2Call` callback function. Used in case 
+    * @param data Arbitrary length data to be passed to the `uniswapV2Call` callback function. Used in case 
     * of flash swap.
     */ 
     function swap(
@@ -251,7 +251,7 @@ contract DexPair is IDexPair, DexKIP7 {
     * @dev skim() functions as a recovery mechanism in case enough tokens are sent to an pair to
     * overflow the two uint112 storage slots for reserves, which could otherwise cause trades to
     * fail. skim() allows a user to withdraw the difference between the current balance of the
-    * pair and 2112 − 1 to the caller, if that difference is greater than 0.
+    * pair and reserves to the caller, if that difference is greater than 0.
     */ 
     function skim(address to) external lock {
         address _token0 = token0; // gas savings

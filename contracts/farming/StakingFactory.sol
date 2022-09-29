@@ -40,7 +40,7 @@ contract StakingFactory is Ownable {
         require(_multisig != address(0), "Multisig cannot be the zero address");
         require(IKIP7(_stakedToken).totalSupply() > 0);
         require(IKIP7(_rewardToken).totalSupply() > 0);
-        require(_stakedToken != _rewardToken, "Tokens must be be different");
+        require(_stakedToken != _rewardToken, "Tokens must be different");
 
         staking = address(
             new StakingInitializable{

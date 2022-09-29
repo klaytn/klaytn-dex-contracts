@@ -150,6 +150,8 @@ contract Farming is Ownable, ReentrancyGuard {
      * @param _allocPoint Number of allocation points for the new pool.
      * @param _lpToken Address of the LP KIP7 token.
      * @param _bonusMultiplier  The pool reward multipler.
+     * @param _bonusEndBlock The block number after which the pool doesn't get any reward bonus from `bonusMultiplier`.
+     * After this block `bonusMultiplier` is not applied during reward multiplier calculation.
      */
     function add(
         uint256 _allocPoint,

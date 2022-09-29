@@ -114,7 +114,7 @@ contract DexKIP7 is IDexKIP7, KIP13 {
      *
      * Emits a {Transfer} event.
      *
-     * Requirements to check:
+     * Requirements that are checked by the function:
      *
      * - `from` should not be the zero address.
      * - `to` should not be the zero address.

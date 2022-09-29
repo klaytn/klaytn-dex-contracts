@@ -205,7 +205,7 @@ contract MultiSigWallet {
         emit Revocation(msg.sender, transactionId);
     }
 
-    /// @dev Allows anyone to execute a confirmed transaction.
+    /// @dev Allows an owner to execute a confirmed transaction.
     /// @param transactionId Transaction ID.
     function executeTransaction(uint256 transactionId)
         public
@@ -300,7 +300,7 @@ contract MultiSigWallet {
     /*
      * Web3 call functions
      */
-    /// @dev Returns total number of transactions after filers are applied.
+    /// @dev Returns total number of transactions after filters are applied.
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return count Total number of transactions after filters are applied.

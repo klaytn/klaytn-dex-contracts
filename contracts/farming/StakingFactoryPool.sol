@@ -218,7 +218,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
      * @notice Transfers reward tokens from the contract to the specified address
      * @dev Only callable by multisig contract. Needs to be for emergency.
      * @param _amount: Amount of reward tokens to transfer
-     * @param _recipient: A wallet's address to trasfer tokens to
+     * @param _recipient: A wallet's address to transfer tokens to
      */
     function emergencyRewardWithdraw(uint256 _amount, address _recipient) external onlyOwner {
         require(_recipient != address(0), "Withdraw to the zero address");
@@ -355,7 +355,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     /**
      * @notice Update reward variables of the given pool to be up-to-date.
      * @dev If the current block number is higher than the reward-end block,
-     * the pool rewads are no longer updated (stopped).
+     * the pool rewadrs are no longer updated (stopped).
      */
     function _updatePool() internal {
         if (block.number > pool.lastRewardBlock) {

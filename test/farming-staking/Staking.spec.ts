@@ -189,7 +189,7 @@ describe('Staking', () => {
           alice.address,
         ),
       ).to.be.revertedWith(
-        'Tokens must be be different',
+        'Tokens must be different',
       );
 
       await expect(

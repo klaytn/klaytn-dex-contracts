@@ -109,6 +109,8 @@ The `k` value in the [constant product formula](#constant-product-formula) is ca
 
 [Dex protocol](#dex) works with ERC20 and KIP7 token standards that implement APIs for fungible tokens within smart contracts.
 
+Note that deflationary tokens and tokens with commission on transfer are not supported on DEX.
+
 #### ERC20
 
 [ERC20](https://eips.ethereum.org/EIPS/eip-20) (Ethereum Request for Comments 20) is a token standard that was proposed by Fabian Vogelsteller. Dex supports all standard ERC20 implementations.
@@ -531,7 +533,7 @@ Given an output amount of an asset (`amountOut`) and pair reserves (`reserveIn`,
 
 ### Farming and Staking
 
-Smart contracts for farming activities only support KIP7 standard tokens. Smart contracts for staking activities support both ERC20 and KIP7 standard tokens.
+Smart contracts for farming activities only support KIP7 standard tokens. Smart contracts for staking activities support both ERC20 and KIP7 standard tokens. Note that deflationary tokens and tokens with commission on transfer are not supported on DEX.
 
 Smart contracts for farming and staking are implemented using two different types of smart contracts. The main difference between the two is in the way the rewards are distributed across pools. 
 

@@ -800,6 +800,15 @@ Refer to [reward debt and pending reward](#staking-reward-debt-and-pending-rewar
 
 [`Ownable`](#ownable) and [`AccessControl`](#accesscontrol) contracts regulate ownership and role-base access to DEX functionality.
 
+Owners and admins are privileged roles. Owners are allowed to modify the contract they own:
+
+- The owner of the [`Farming`](#farming) contract can update pool settings such as allocation points and rewards.
+- The owner of the [`StakingFactory](#stakingfactory) can deploy new pools.
+- The owner of the ` StakingFactoryPool` can withdraw reward tokens at any time.
+- The admin of the `PlatformToken` contract can change who gets to mint and burn tokens.
+
+This poses certain risks associated with the ownership being transferred or renounced, or admin roles being revoked. Check the warnings for the [admin role](#admin-role) and [owners](#ownable-functions).
+
 #### `Ownable`
 
 The `Ownable` contract provides basic access control mechanism: granting accounts exclusive access to specific functions. The account that was granted such exclusive access becomes an **owner** of the specified functionality.

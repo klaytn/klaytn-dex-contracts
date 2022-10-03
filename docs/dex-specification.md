@@ -712,6 +712,8 @@ The contract for the new staking pool is deployed using `StakingInitializable` c
 - the limit of the number of blocks available for a user
 - the multisig address
 
+**Note**: There are no restrictions on `startBlock` and `endBlock` values, meaning they can be set far in the future. Be advised to pay attention to the values set as the start and end blocks when deploying a pool.
+
 The function returns the address of a new staking pool contract.
 
 #### `StakingInitializable`
@@ -775,18 +777,18 @@ Whenever the user `deposit`s or `withdraw`s staked tokens to a pool, the followi
 
 ##### Staking: Functions
 
-|                  Function                   |                                                    Description                                                     |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `initialize`                                | Initialize the staking contract. The contract is owned by the [multisig contract](#multisignature-wallet).         |
-| `deposit`                                   | Deposit staked tokens and collect reward tokens (if any).                                                          |
-| `withdraw`                                  | Withdraw staked tokens and collect reward tokens (if any).                                                         |
-| `recoverToken`                              | Recover tokens sent to the contract by mistake. Can only be called by [multisig contract](#multisignature-wallet). |
-| `updatePoolLimitPerUser`                    | Update pool limit per user. Can only be called by [multisig contract](#multisignature-wallet).                     |
-| `updateRewardPerBlock`                      | Update reward per block. Can only be called by [multisig contract](#multisignature-wallet).                        |
-| `updateStartAndEndBlocks`                   | Update the start and end blocks. Can only be called by [multisig contract](#multisignature-wallet).                |
-| [`_updatePool`](#staking-_updatepool)       | Update reward variables for the given pool.                                                                        |
-| [`_getMultiplier`](#staking-_getmultiplier) | Return reward multiplier between two given blocks for the specified pool.                                          |
-| `hasUserLimit`                              | Check if the user limit is set. (?)                                                                                |
+|                           Function                            |                                                    Description                                                     |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `initialize`                                                  | Initialize the staking contract. The contract is owned by the [multisig contract](#multisignature-wallet).         |
+| `deposit`                                                     | Deposit staked tokens and collect reward tokens (if any).                                                          |
+| `withdraw`                                                    | Withdraw staked tokens and collect reward tokens (if any).                                                         |
+| `recoverToken`                                                | Recover tokens sent to the contract by mistake. Can only be called by [multisig contract](#multisignature-wallet). |
+| `updatePoolLimitPerUser`                                      | Update pool limit per user. Can only be called by [multisig contract](#multisignature-wallet).                     |
+| [`updateRewardPerBlock`](#staking-updaterewardperblock)       | Update reward per block. Can only be called by [multisig contract](#multisignature-wallet).                        |
+| [`updateStartAndEndBlocks`](#staking-updatestartandendblocks) | Update the start and end blocks. Can only be called by [multisig contract](#multisignature-wallet).                |
+| [`_updatePool`](#staking-_updatepool)                         | Update reward variables for the given pool.                                                                        |
+| [`_getMultiplier`](#staking-_getmultiplier)                   | Return reward multiplier between two given blocks for the specified pool.                                          |
+| `hasUserLimit`                                                | Check if the user limit is set. (?)                                                                                |
 
 For emergency situations:
 
@@ -838,6 +840,24 @@ The function updates the reward variables for the given pool. If the current blo
    - Add the resulting value to the current value of `accTokenPerShare`.
 
 Refer to [reward debt and pending reward](#staking-reward-debt-and-pending-reward) for more information.
+
+###### Staking: `updateStartAndEndBlocks`
+
+Update the start and end blocks before the rewards accumulation has started. The new `startBlock` value must be lower than the new `endBlock` and higher than the current block. 
+
+**Note**: There are no restrictions on `startBlock` and `endBlock` values, meaning they can be set far in the future. Be advised to pay attention to the values used to update `startBlock` and `endBlock`.
+
+This function can only be called by the contract owner ([multisig contract](#multisignature-wallet)).
+
+**Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the start block value with `updateStartAndEndBlocks`. Changing the start block also leads to changing the pool address.
+
+###### Staking: `updateRewardPerBlock`
+
+Update reward per block. The reward can only be updated before the reward accumulation has started.
+
+This function can only be called by the contract owner ([multisig contract](#multisignature-wallet)).
+
+**Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool  address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the reward token value with `updateRewardPerBlock`. Changing the reward also leads to changing the pool address.
 
 ### Access
 

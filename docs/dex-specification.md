@@ -141,6 +141,8 @@ The `safeTransfer` and `safeTransferFrom` invoke external call `onKIP7Received` 
 
 Users should check the recipient address thoroughly if they want to use these functions. They should check that it doesn't look suspicious to them and doesn't have any malicious code (unverified contracts).
 
+**Warning**: There is also a risk of double-spend allowance when `approve` and `transferFrom` are used. The avoid an attack when changing the allowance value, first set allowance to zero, then verify if it was used before setting the new value.
+
 ### Liquidity Pool
 
 Liquidity pools are smart contracts that hold balances of two unique tokens and enforce rules on depositing and withdrawing them. See [Farming and Staking](#farming-and-staking) for more details.

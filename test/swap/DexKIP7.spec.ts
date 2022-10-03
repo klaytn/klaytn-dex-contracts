@@ -70,6 +70,13 @@ describe('DexKIP7', () => {
       .to.be.rejectedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
   });
 
+  it('safeTransfer:to the contract', async () => {
+    const kip7Holder = await (await ethers.getContractFactory('KIP7Holder')).deploy();
+    await token['safeTransfer(address,uint256)'](kip7Holder.address, TEST_AMOUNT);
+    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT));
+    expect(await token.balanceOf(kip7Holder.address)).to.eq(TEST_AMOUNT);
+  });
+
   it('transfer:fail', async () => {
     await expect(token.transfer(
       other.address,
@@ -77,6 +84,10 @@ describe('DexKIP7', () => {
     )).to.be.reverted; // ds-math-sub-underflow
     await expect(token.connect(other)
       .transfer(wallet.address, 1)).to.be.reverted; // ds-math-sub-underflow
+    await expect(token.transfer(
+      constants.AddressZero,
+      TEST_AMOUNT,
+    )).to.be.revertedWith('KIP7: transfer to the zero address');
   });
 
   it('transferFrom', async () => {
@@ -95,6 +106,25 @@ describe('DexKIP7', () => {
       .to.emit(token, 'Transfer')
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
     expect(await token.allowance(wallet.address, other.address)).to.eq(constants.MaxUint256);
+    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT));
+    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
+  });
+
+  it('transferFrom:fail', async () => {
+    await token.approve(other.address, TEST_AMOUNT);
+    await expect(token.connect(other).transferFrom(
+      constants.AddressZero,
+      other.address,
+      TEST_AMOUNT,
+    )).to.be.revertedWith('KIP7: insufficient allowance');
+  });
+
+  it('safeTransferFrom', async () => {
+    await token.approve(other.address, TEST_AMOUNT);
+    await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, other.address, TEST_AMOUNT))
+      .to.emit(token, 'Transfer')
+      .withArgs(wallet.address, other.address, TEST_AMOUNT);
+    expect(await token.allowance(wallet.address, other.address)).to.eq(0);
     expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT));
     expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
   });

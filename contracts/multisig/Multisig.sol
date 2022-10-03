@@ -52,11 +52,6 @@ contract MultiSigWallet {
         _;
     }
 
-    modifier ownerDoesNotExist(address owner) {
-        require(!owners.contains(owner));
-        _;
-    }
-
     modifier ownerExists(address owner) {
         require(owners.contains(owner));
         _;

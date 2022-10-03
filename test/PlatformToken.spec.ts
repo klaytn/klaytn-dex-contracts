@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import { BigNumber, constants } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { PlatformToken } from '../typechain/contracts/tokens/PlatformToken';
@@ -24,6 +24,12 @@ describe('PlatformToken', () => {
     await token.connect(multisig).grantRole((await token.MINTER_ROLE()), alice.address);
     await token.connect(multisig).grantRole((await token.BURNER_ROLE()), alice.address);
     await token.deployed();
+  });
+
+  it('deploy:fail, multisig cannot be the zero address', async () => {
+    const ptn = await ethers.getContractFactory('PlatformToken');
+    await expect(ptn.deploy('Platform Token', 'PTN', constants.AddressZero))
+      .to.be.revertedWith('Multisig cannot be the zero address');
   });
 
   it('initial nonce is 0', async () => {

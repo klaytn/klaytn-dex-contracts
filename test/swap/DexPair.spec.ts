@@ -319,6 +319,9 @@ describe('DexPair', () => {
     await expect(pair.swap(0, expectedOutputAmount, token0.address, '0x'))
       .to.be.revertedWithCustomError(pair, 'InvalidAddressParameters')
       .withArgs('DEX: INVALID_TO');
+    await expect(pair.swap(token0Amount.sub(100), token1Amount.sub(200), wallet.address, '0x'))
+      .to.be.revertedWithCustomError(pair, 'InsufficientAmount')
+      .withArgs('DEX: INSUFFICIENT_INPUT_AMOUNT');
     await expect(pair.swap(0, 0, wallet.address, '0x'))
       .to.be.revertedWithCustomError(pair, 'InsufficientAmount')
       .withArgs('DEX: INSUFFICIENT_OUTPUT_AMOUNT');

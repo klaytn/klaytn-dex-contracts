@@ -4,10 +4,10 @@ import { Contract, BigNumber, constants } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { routerFixture } from '../shared/fixtures';
 import { getPermitSignature, mineBlock } from '../shared/utilities';
-import { DexFactory } from '../../typechain/swap/DexFactory';
-import { DexPair } from '../../typechain/swap/DexPair';
-import { KIP7Mock } from '../../typechain/mocks/KIP7TestMock.sol/KIP7Mock';
-import { DexRouter } from '../../typechain/swap/DexRouter';
+import { DexFactory } from '../../typechain/contracts/swap/DexFactory';
+import { DexPair } from '../../typechain/contracts/swap/DexPair';
+import { KIP7Mock } from '../../typechain/contracts/mocks/KIP7TestMock.sol/KIP7Mock';
+import { DexRouter } from '../../typechain/contracts/swap/DexRouter';
 
 const MINIMUM_LIQUIDITY = BigNumber.from(10).pow(3);
 
@@ -44,6 +44,16 @@ describe('DexRouter', () => {
     await token1.transfer(pair.address, token1Amount);
     await pair.mint(wallet.address);
   }
+
+  it('deploy:fail, wrong address parameters', async () => {
+    const dexRouter = await ethers.getContractFactory('DexRouter');
+    await expect(dexRouter.deploy(constants.AddressZero, WKLAY.address))
+      .to.be.revertedWithCustomError(dexRouter, 'InvalidAddressParameters')
+      .withArgs('DexRouter: FACTORY_ZERO_ADDRESS');
+    await expect(dexRouter.deploy(factory.address, constants.AddressZero))
+      .to.be.revertedWithCustomError(dexRouter, 'InvalidAddressParameters')
+      .withArgs('DexRouter: WKLAY_ZERO_ADDRESS');
+  });
 
   it('quote', async () => {
     expect(await router.quote(BigNumber.from(1), BigNumber.from(100), BigNumber.from(200)))
@@ -260,6 +270,37 @@ describe('DexRouter', () => {
         0,
       ),
     ).to.be.revertedWithCustomError(router, 'Expired');
+    await expect(
+      router.addLiquidity(
+        token0.address,
+        token1.address,
+        token0Amount,
+        token1Amount,
+        0,
+        0,
+        constants.AddressZero,
+        constants.MaxUint256,
+      ),
+    ).to.be.revertedWithCustomError(router, 'InvalidAddressParameters')
+      .withArgs('DexRouter: RECIPIENT_ZERO_ADDRESS');
+  });
+
+  it('addLiquidityKLAY:fail', async () => {
+    const WKLAYPartnerAmount = ethers.utils.parseEther('1');
+    const KLAYAmount = ethers.utils.parseEther('4');
+    await WKLAYPartner.approve(router.address, constants.MaxUint256);
+    await expect(
+      router.addLiquidityKLAY(
+        WKLAYPartner.address,
+        WKLAYPartnerAmount,
+        WKLAYPartnerAmount,
+        KLAYAmount,
+        constants.AddressZero,
+        constants.MaxUint256,
+        { value: KLAYAmount },
+      ),
+    ).to.be.revertedWithCustomError(router, 'InvalidAddressParameters')
+      .withArgs('DexRouter: RECIPIENT_ZERO_ADDRESS');
   });
 
   it('addLiquidityKLAY', async () => {
@@ -382,6 +423,18 @@ describe('DexRouter', () => {
       ),
     ).to.be.revertedWithCustomError(router, 'InsufficientAmount')
       .withArgs('DexRouter: INSUFFICIENT_B_AMOUNT');
+    await expect(
+      router.removeLiquidity(
+        token0.address,
+        token1.address,
+        expectedLiquidity.sub(MINIMUM_LIQUIDITY),
+        0,
+        0,
+        constants.AddressZero,
+        constants.MaxUint256,
+      ),
+    ).to.be.revertedWithCustomError(router, 'InvalidAddressParameters')
+      .withArgs('DexRouter: RECIPIENT_ZERO_ADDRESS');
   });
   it('removeLiquidityKLAY', async () => {
     const WKLAYPartnerAmount = ethers.utils.parseEther('1');
@@ -793,7 +846,7 @@ describe('DexRouter', () => {
         },
       );
       const receipt = await tx.wait();
-      expect(receipt.gasUsed).to.eq(104286);
+      expect(receipt.gasUsed).to.be.approximately(104314, 100);
     }).retries(3);
   });
 
@@ -880,6 +933,28 @@ describe('DexRouter', () => {
       await expect(
         router.swapExactTokensForTokens(
           swapAmount,
+          constants.MaxUint256,
+          [token0.address, token1.address],
+          wallet.address,
+          constants.MaxUint256,
+        ),
+      ).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+        .withArgs('DexRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+
+      await expect(
+        router.swapExactTokensForTokens(
+          swapAmount,
+          0,
+          [token0.address, token1.address],
+          constants.AddressZero,
+          constants.MaxUint256,
+        ),
+      ).to.be.revertedWithCustomError(router, 'InvalidAddressParameters')
+        .withArgs('DexRouter: SWAP_TO_ZERO_ADDRESS');
+
+      await expect(
+        router.swapExactTokensForTokens(
+          swapAmount,
           0,
           [token0.address, token1.address],
           wallet.address,
@@ -910,7 +985,7 @@ describe('DexRouter', () => {
         constants.MaxUint256,
       );
       const receipt = await tx.wait();
-      expect(receipt.gasUsed).to.eq(101562);
+      expect(receipt.gasUsed).to.eq(101682);
     }).retries(3);
   });
 
@@ -1095,6 +1170,15 @@ describe('DexRouter fee-on-transfer tokens', async () => {
       await WKLAY.deposit({ value: amountIn }); // mint WKLAY
       await WKLAY.approve(router.address, constants.MaxUint256);
 
+      await expect(router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        amountIn,
+        constants.MaxUint256,
+        [WKLAY.address, DTT.address],
+        wallet.address,
+        constants.MaxUint256,
+      )).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+        .withArgs('DexRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+
       await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
         amountIn,
         0,
@@ -1123,6 +1207,17 @@ describe('DexRouter fee-on-transfer tokens', async () => {
         value: swapAmount,
       },
     )).to.be.revertedWithCustomError(router, 'InvalidPath');
+
+    await expect(router.swapExactKLAYForTokensSupportingFeeOnTransferTokens(
+      constants.MaxUint256,
+      [WKLAY.address, DTT.address],
+      wallet.address,
+      constants.MaxUint256,
+      {
+        value: swapAmount,
+      },
+    )).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+      .withArgs('DexRouter: INSUFFICIENT_OUTPUT_AMOUNT');
 
     await router.swapExactKLAYForTokensSupportingFeeOnTransferTokens(
       0,
@@ -1154,6 +1249,15 @@ describe('DexRouter fee-on-transfer tokens', async () => {
       constants.MaxUint256,
     )).to.be.revertedWithCustomError(router, 'InvalidPath');
 
+    await expect(router.swapExactTokensForKLAYSupportingFeeOnTransferTokens(
+      swapAmount,
+      constants.MaxUint256,
+      [DTT.address, WKLAY.address],
+      wallet.address,
+      constants.MaxUint256,
+    )).to.be.revertedWithCustomError(router, 'InsufficientAmount')
+      .withArgs('DexRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+
     await router.swapExactTokensForKLAYSupportingFeeOnTransferTokens(
       swapAmount,
       0,
@@ -1178,10 +1282,8 @@ describe('DexRouter fee-on-transfer tokens: reloaded', async () => {
     DTT = await DTTFactory.deploy(ethers.utils.parseEther('10000'));
     DTT2 = await DTTFactory.deploy(ethers.utils.parseEther('10000'));
 
-    // make a DTT<>WKLAY pair
+    // make a DTT<>DTT2 pair
     await fixture.factory.createPair(DTT.address, DTT2.address);
-    const pairAddress = await fixture.factory.getPair(DTT.address, DTT2.address);
-    console.log(pairAddress);
   });
 
   afterEach(async () => {
@@ -1216,6 +1318,15 @@ describe('DexRouter fee-on-transfer tokens: reloaded', async () => {
 
     it('DTT -> DTT2', async () => {
       await DTT.approve(router.address, constants.MaxUint256);
+
+      await expect(router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        amountIn,
+        0,
+        [DTT.address, DTT2.address],
+        constants.AddressZero,
+        constants.MaxUint256,
+      )).to.be.revertedWithCustomError(router, 'InvalidAddressParameters')
+        .withArgs('DexRouter: SWAP_TO_ZERO_ADDRESS');
 
       await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
         amountIn,

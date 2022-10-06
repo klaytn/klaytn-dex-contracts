@@ -5,7 +5,7 @@ import "../libraries/DexLibrary.sol";
 import "../libraries/TransferHelper.sol";
 import "../interfaces/IDexRouter.sol";
 import "../interfaces/IDexFactory.sol";
-import "../interfaces/IKIP7.sol";
+import "@klaytn/contracts/KIP/interfaces/IKIP7.sol";
 import "../interfaces/IWKLAY.sol";
 import "./Errors.sol";
 
@@ -21,6 +21,8 @@ contract DexRouter is IDexRouter {
     }
 
     constructor(address _factory, address _WKLAY) {
+        if(_factory == address(0)) revert InvalidAddressParameters("DexRouter: FACTORY_ZERO_ADDRESS");
+        if(_WKLAY == address(0)) revert InvalidAddressParameters("DexRouter: WKLAY_ZERO_ADDRESS");
         factory = _factory;
         WKLAY = _WKLAY;
     }
@@ -120,7 +122,8 @@ contract DexRouter is IDexRouter {
             uint256 amountB,
             uint256 liquidity
         )
-    {
+    {   
+        if(to == address(0)) revert InvalidAddressParameters("DexRouter: RECIPIENT_ZERO_ADDRESS");
         (amountA, amountB) = _addLiquidity(
             tokenA,
             tokenB,
@@ -176,6 +179,7 @@ contract DexRouter is IDexRouter {
             uint256 liquidity
         )
     {
+        if(to == address(0)) revert InvalidAddressParameters("DexRouter: RECIPIENT_ZERO_ADDRESS");
         (amountToken, amountKLAY) = _addLiquidity(
             token,
             WKLAY,
@@ -224,6 +228,7 @@ contract DexRouter is IDexRouter {
         ensure(deadline)
         returns (uint256 amountA, uint256 amountB)
     {
+        if(to == address(0)) revert InvalidAddressParameters("DexRouter: RECIPIENT_ZERO_ADDRESS");
         address pair = DexLibrary.pairFor(factory, tokenA, tokenB);
         IDexPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint256 amount0, uint256 amount1) = IDexPair(pair).burn(to);
@@ -430,8 +435,9 @@ contract DexRouter is IDexRouter {
         address[] memory path,
         address _to
     ) internal virtual {
+        if(_to == address(0)) revert InvalidAddressParameters("DexRouter: SWAP_TO_ZERO_ADDRESS");
         uint256 length = path.length - 1;
-        for (uint256 i; i < length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = DexLibrary.sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
@@ -692,7 +698,8 @@ contract DexRouter is IDexRouter {
         address[] memory path,
         address _to
     ) internal virtual {
-        for (uint256 i; i < path.length - 1; i++) {
+        if(_to == address(0)) revert InvalidAddressParameters("DexRouter: SWAP_TO_ZERO_ADDRESS");
+        for (uint256 i = 0; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = DexLibrary.sortTokens(input, output);
             IDexPair pair = IDexPair(

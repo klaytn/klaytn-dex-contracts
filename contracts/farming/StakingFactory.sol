@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.12;
 
-import "../utils/access/Ownable.sol";
+import "@klaytn/contracts/access/Ownable.sol";
 import "./StakingFactoryPool.sol";
-import "../interfaces/IKIP7.sol";
+import "@klaytn/contracts/KIP/interfaces/IKIP7.sol";
 
 contract StakingFactory is Ownable {
     event NewStakingContract(address indexed staking);
 
     constructor(address _multisig) {
+        require(_multisig != address(0), "Multisig cannot be the zero address");
         // Transfer ownership to the multisig contract who becomes the owner of the contract
         transferOwnership(_multisig);
     }
@@ -36,9 +37,10 @@ contract StakingFactory is Ownable {
         uint256 _numberBlocksForUserLimit,
         address _multisig
     ) external onlyOwner returns (address staking) {
-        require(IKIP7(_stakedToken).totalSupply() >= 0);
-        require(IKIP7(_rewardToken).totalSupply() >= 0);
-        require(_stakedToken != _rewardToken, "Tokens must be be different");
+        require(_multisig != address(0), "Multisig cannot be the zero address");
+        require(IKIP7(_stakedToken).totalSupply() > 0);
+        require(IKIP7(_rewardToken).totalSupply() > 0);
+        require(_stakedToken != _rewardToken, "Tokens must be different");
 
         staking = address(
             new StakingInitializable{

@@ -5,12 +5,7 @@ module.exports = {
                 'tokens/KIP7.sol',
                 'tokens/TestToken.sol',
                 'tokens/WKLAY.sol',
-                'tokens/extensions/KIP7Votes.sol',
-                'tokens/extensions/draft-KIP7Permit.sol',
-                'mocks/DeflatingKIP7.sol',
-                'mocks/DexKIP7Test.sol',
-                'mocks/KIP7TestMock.sol',
-                'farming/MultiCall.sol',
+                'mocks/',
                 ],
     configureYulOptimizer: false,
     mocha: {

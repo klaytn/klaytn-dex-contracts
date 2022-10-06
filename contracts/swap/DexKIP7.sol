@@ -2,9 +2,9 @@
 pragma solidity =0.8.12;
 
 import '../interfaces/IDexKIP7.sol';
-import '../interfaces/IKIPReciever.sol';
-import '../utils/Address.sol';
-import '../utils/KIP13.sol';
+import "@klaytn/contracts/KIP/interfaces/IKIP7Receiver.sol";
+import '@klaytn/contracts/utils/Address.sol';
+import '@klaytn/contracts/KIP/utils/introspection/KIP13.sol';
 
 contract DexKIP7 is IDexKIP7, KIP13 {
     using Address for address;
@@ -16,13 +16,11 @@ contract DexKIP7 is IDexKIP7, KIP13 {
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
 
-    // Equals to `bytes4(keccak256("onKIP7Received(address,address,uint256,bytes)"))`
-    // which can be also obtained as `IKIP7Receiver(0).onKIP7Received.selector`
-    bytes4 private constant _KIP7_RECEIVED = 0x9d188c22;
+    // Can be also obtained as `IKIP7Receiver(0).onKIP7Received.selector`
+    bytes4 private constant _KIP7_RECEIVED = bytes4(keccak256("onKIP7Received(address,address,uint256,bytes)"));
 
     bytes32 public immutable DOMAIN_SEPARATOR;
-    // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-    bytes32 public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+    bytes32 public constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     mapping(address => uint) public nonces;
 
     constructor() {
@@ -116,13 +114,15 @@ contract DexKIP7 is IDexKIP7, KIP13 {
      *
      * Emits a {Transfer} event.
      *
-     * Requirements to check:
+     * Requirements that are checked by the function:
      *
      * - `from` should not be the zero address.
      * - `to` should not be the zero address.
      * - `from` must have a balance of at least `amount`.
      */
     function _transfer(address from, address to, uint amount) private {
+        require(from != address(0), "KIP7: transfer from the zero address");
+        require(to != address(0), "KIP7: transfer to the zero address");
         uint256 fromBalance = balanceOf[from];
         require(fromBalance >= amount, "KIP7: transfer amount exceeds balance");
         unchecked {
@@ -155,7 +155,10 @@ contract DexKIP7 is IDexKIP7, KIP13 {
     function transferFrom(address from, address to, uint amount) external returns (bool) {
         uint currentAllowance = allowance[from][msg.sender];
         if (currentAllowance != type(uint).max) {
-            allowance[from][msg.sender] = currentAllowance - amount;
+            require(currentAllowance >= amount, "KIP7: insufficient allowance");
+            unchecked {
+                allowance[from][msg.sender] = currentAllowance - amount;
+            }
         }
         _transfer(from, to, amount);
         return true;
@@ -172,7 +175,6 @@ contract DexKIP7 is IDexKIP7, KIP13 {
     * @dev Moves `amount` tokens from the caller's account to `recipient`.
     */
     function safeTransfer(address recipient, uint256 amount, bytes memory data) public {
-        require(recipient != address(0), "KIP7: transfer to the zero address");
         _transfer(msg.sender, recipient, amount);
         require(_checkOnKIP7Received(msg.sender, recipient, amount, data), "KIP7: transfer to non KIP7Receiver implementer");
     }
@@ -190,13 +192,12 @@ contract DexKIP7 is IDexKIP7, KIP13 {
     * `amount` is then deducted from the caller's allowance.
     */
     function safeTransferFrom(address sender, address recipient, uint256 amount, bytes memory data) public {
-        require(sender != address(0), "KIP7: transfer from the zero address");
-        require(recipient != address(0), "KIP7: transfer to the zero address");
-
         uint currentAllowance = allowance[sender][msg.sender];
         if (currentAllowance != type(uint).max) {
             require(currentAllowance >= amount, "KIP7: insufficient allowance");
-            allowance[sender][msg.sender] = currentAllowance - amount;
+            unchecked {
+                allowance[sender][msg.sender] = currentAllowance - amount;
+            }
         }
         _transfer(sender, recipient, amount);
         require(_checkOnKIP7Received(sender, recipient, amount, data), "KIP7: transfer to non KIP7Receiver implementer");
@@ -249,7 +250,7 @@ contract DexKIP7 is IDexKIP7, KIP13 {
             return true;
         }
 
-        bytes4 retval = IKIP7TokenReceiver(recipient).onKIP7Received(msg.sender, sender, amount, _data);
+        bytes4 retval = IKIP7Receiver(recipient).onKIP7Received(msg.sender, sender, amount, _data);
         return (retval == _KIP7_RECEIVED);
     }
 }

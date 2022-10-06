@@ -173,7 +173,7 @@ describe('DexPair', () => {
     await mineBlock((await ethers.provider.getBlock('latest')).timestamp + 1);
     const tx = await pair.swap(expectedOutputAmount, 0, wallet.address, '0x');
     const receipt = await tx.wait();
-    expect(receipt.gasUsed).to.eq(74121);
+    expect(receipt.gasUsed).to.eq(74056);
   });
 
   it('burn', async () => {
@@ -319,6 +319,9 @@ describe('DexPair', () => {
     await expect(pair.swap(0, expectedOutputAmount, token0.address, '0x'))
       .to.be.revertedWithCustomError(pair, 'InvalidAddressParameters')
       .withArgs('DEX: INVALID_TO');
+    await expect(pair.swap(token0Amount.sub(100), token1Amount.sub(200), wallet.address, '0x'))
+      .to.be.revertedWithCustomError(pair, 'InsufficientAmount')
+      .withArgs('DEX: INSUFFICIENT_INPUT_AMOUNT');
     await expect(pair.swap(0, 0, wallet.address, '0x'))
       .to.be.revertedWithCustomError(pair, 'InsufficientAmount')
       .withArgs('DEX: INSUFFICIENT_OUTPUT_AMOUNT');

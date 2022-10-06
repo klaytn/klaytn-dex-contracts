@@ -19,11 +19,18 @@ describe('DexFactory', () => {
     factory = (await factoryFixture(wallet)).factory;
   });
 
+  it('deployFactory: fail, feeToSetter cannot be the zero address', async () => {
+    const factoryContract = await ethers.getContractFactory('DexFactory');
+    await expect(factoryContract.deploy(constants.AddressZero))
+      .to.be.revertedWithCustomError(factoryContract, 'InvalidAddressParameters')
+      .withArgs('DEX: SETTER_ZERO_ADDRESS');
+  });
+
   it('feeTo, feeToSetter, allPairsLength', async () => {
     expect(await factory.feeTo()).to.eq(constants.AddressZero);
     expect(await factory.feeToSetter()).to.eq(await wallet.getAddress());
     expect(await factory.allPairsLength()).to.eq(0);
-    console.log(await factory.INIT());
+    console.log('Init code hash:', await factory.INIT());
   });
 
   async function createPair(tokens: [string, string]) {
@@ -78,19 +85,33 @@ describe('DexFactory', () => {
   it('createPair:gas [ @skip-on-coverage ]', async () => {
     const tx = await factory.createPair(...TEST_ADDRESSES);
     const receipt = await tx.wait();
-    expect(receipt.gasUsed).to.eq(2201496);
+    expect(receipt.gasUsed).to.eq(2198483);
+  });
+
+  it('setFeeTo:fail, Unauthorized', async () => {
+    await expect(factory.connect(other).setFeeTo(other.address)).to.be.revertedWithCustomError(factory, 'Unauthorized');
   });
 
   it('setFeeTo', async () => {
-    await expect(factory.connect(other).setFeeTo(other.address)).to.be.revertedWithCustomError(factory, 'Unauthorized');
     await factory.setFeeTo(wallet.address);
     expect(await factory.feeTo()).to.eq(wallet.address);
   });
 
-  it('setFeeToSetter', async () => {
+  it('setFeeToSetter:fail', async () => {
+    await expect(factory.setFeeToSetter(constants.AddressZero))
+      .to.be.revertedWithCustomError(factory, 'InvalidAddressParameters').withArgs('DEX: SETTER_ZERO_ADDRESS');
     await expect(factory.connect(other).setFeeToSetter(other.address)).to.be.revertedWithCustomError(factory, 'Unauthorized');
+  });
+
+  it('setFeeToSetter', async () => {
     await factory.setFeeToSetter(other.address);
     expect(await factory.feeToSetter()).to.eq(other.address);
-    await expect(factory.setFeeToSetter(wallet.address)).to.be.revertedWithCustomError(factory, 'Unauthorized');
+    await expect(factory.setFeeToSetter(other.address)).to.be.revertedWithCustomError(factory, 'Unauthorized');
+  });
+
+  it('math lib extra test', async () => {
+    const mathMock = await (await ethers.getContractFactory('MathMock')).deploy();
+    expect(await mathMock.sqrt(2)).to.eq(1);
+    expect(await mathMock.sqrt(0)).to.eq(0);
   });
 });

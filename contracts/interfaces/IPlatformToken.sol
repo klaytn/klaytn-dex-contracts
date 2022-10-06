@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import './IKIP7Metadata.sol';
-import './IKIP13.sol';
-import './draft-IKIP7Permit.sol';
-import './IVotes.sol';
-import './IAccessControl.sol';
-
-interface IPlatformToken is IKIP7Metadata, IKIP7Permit, IVotes, IAccessControl {
+interface IPlatformToken {
 
     /**
      * @dev Creates `amount` tokens and assigns them to `account`

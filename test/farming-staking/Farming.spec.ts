@@ -1,12 +1,13 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
+import { constants } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { mineUpTo } from '@nomicfoundation/hardhat-network-helpers';
-import { Farming__factory } from '../../typechain/factories/farming/Farming__factory';
-import { DexKIP7Test__factory } from '../../typechain/factories/mocks/DexKIP7Test__factory';
-import { Farming } from '../../typechain/farming/Farming';
-import { PlatformToken } from '../../typechain/tokens/PlatformToken';
-import { DexKIP7Test } from '../../typechain/mocks/DexKIP7Test';
+import { Farming__factory } from '../../typechain/factories/contracts/farming/Farming__factory';
+import { DexKIP7Test__factory } from '../../typechain/factories/contracts/mocks/DexKIP7Test__factory';
+import { Farming } from '../../typechain/contracts/farming/Farming';
+import { PlatformToken } from '../../typechain/contracts/tokens/PlatformToken';
+import { DexKIP7Test } from '../../typechain/contracts/mocks/DexKIP7Test';
 
 describe('Farming', () => {
   let minter: SignerWithAddress;
@@ -51,6 +52,21 @@ describe('Farming', () => {
     await lp2.transfer(carol.address, '2000');
     await lp3.transfer(carol.address, '2000');
   });
+
+  it('add:fail, should not stake reward token', async () => {
+    // Attempt to add a pool with same reward and stake token
+    await expect(farming.add('100', ptn.address, 1, '10000'))
+      .to.be.revertedWith("Can't stake reward token");
+  });
+
+  it('add:fail, pool was already added', async () => {
+    // Adding the first pool
+    await farming.add('2000', lp1.address, 1, blockNumber + 10000);
+    // Attempt to add a pool with stake token which was already added (lp1 token)
+    await expect(farming.add('100', lp1.address, 1, '10000'))
+      .to.be.revertedWith('Token already added');
+  });
+
   it('real case', async () => {
     const lp4 = await lpFactory.deploy(ethers.utils.parseEther('1000000'));
     const lp5 = await lpFactory.deploy(ethers.utils.parseEther('1000000'));
@@ -76,37 +92,35 @@ describe('Farming', () => {
     const lp25 = await lpFactory.deploy(ethers.utils.parseEther('1000000'));
     const lp26 = await lpFactory.deploy(ethers.utils.parseEther('1000000'));
     const lp27 = await lpFactory.deploy(ethers.utils.parseEther('1000000'));
-    await farming.add('2000', lp1.address, true, 1, blockNumber + 10000);
-    await farming.add('1000', lp2.address, true, 1, blockNumber + 10000);
-    await farming.add('500', lp3.address, true, 1, blockNumber + 10000);
-    await farming.add('500', lp4.address, true, 1, blockNumber + 10000);
-    await farming.add('500', lp5.address, true, 1, blockNumber + 10000);
-    await farming.add('500', lp6.address, true, 1, blockNumber + 10000);
-    await farming.add('500', lp7.address, true, 1, blockNumber + 10000);
-    await farming.add('100', lp8.address, true, 1, '10000');
-    await farming.add('100', lp9.address, true, 1, '10000');
-    await farming.add('2000', lp10.address, true, 1, '10000');
-    await farming.add('1000', lp11.address, true, 1, '10000');
-    await farming.add('500', lp12.address, true, 1, '10000');
-    await farming.add('500', lp13.address, true, 1, '10000');
-    await farming.add('500', lp14.address, true, 1, '10000');
-    await farming.add('500', lp15.address, true, 1, '10000');
-    await farming.add('500', lp16.address, true, 1, '10000');
-    await farming.add('100', lp17.address, true, 1, '10000');
-    await farming.add('100', lp18.address, true, 1, '10000');
-    await farming.add('2000', lp19.address, true, 1, '10000');
-    await farming.add('1000', lp20.address, true, 1, '10000');
-    await farming.add('500', lp21.address, true, 1, '10000');
-    await farming.add('500', lp22.address, true, 1, '10000');
-    await farming.add('500', lp23.address, true, 1, blockNumber + 10000);
-    await farming.add('500', lp24.address, true, 1, blockNumber + 10000);
-    await farming.add('500', lp25.address, true, 1, blockNumber + 10000);
-    await farming.add('100', lp26.address, true, 1, blockNumber + 10000);
-    await farming.add('100', lp27.address, true, 1, blockNumber + 10000);
+    await farming.add('2000', lp1.address, 1, blockNumber + 10000);
+    await farming.add('1000', lp2.address, 1, blockNumber + 10000);
+    await farming.add('500', lp3.address, 1, blockNumber + 10000);
+    await farming.add('500', lp4.address, 1, blockNumber + 10000);
+    await farming.add('500', lp5.address, 1, blockNumber + 10000);
+    await farming.add('500', lp6.address, 1, blockNumber + 10000);
+    await farming.add('500', lp7.address, 1, blockNumber + 10000);
+    await farming.add('100', lp8.address, 1, '10000');
+    await farming.add('100', lp9.address, 1, '10000');
+    await farming.add('2000', lp10.address, 1, '10000');
+    await farming.add('1000', lp11.address, 1, '10000');
+    await farming.add('500', lp12.address, 1, '10000');
+    await farming.add('500', lp13.address, 1, '10000');
+    await farming.add('500', lp14.address, 1, '10000');
+    await farming.add('500', lp15.address, 1, '10000');
+    await farming.add('500', lp16.address, 1, '10000');
+    await farming.add('100', lp17.address, 1, '10000');
+    await farming.add('100', lp18.address, 1, '10000');
+    await farming.add('2000', lp19.address, 1, '10000');
+    await farming.add('1000', lp20.address, 1, '10000');
+    await farming.add('500', lp21.address, 1, '10000');
+    await farming.add('500', lp22.address, 1, '10000');
+    await farming.add('500', lp23.address, 1, blockNumber + 10000);
+    await farming.add('500', lp24.address, 1, blockNumber + 10000);
+    await farming.add('500', lp25.address, 1, blockNumber + 10000);
+    await farming.add('100', lp26.address, 1, blockNumber + 10000);
+    await farming.add('100', lp27.address, 1, blockNumber + 10000);
     expect(await farming.poolLength()).to.be.equal(27);
 
-    await expect(farming.add('100', lp2.address, false, 1, '10000'))
-      .to.be.revertedWith('Token already added');
     await mineUpTo(blockNumber + 170);
     await lp1.connect(alice).approve(farming.address, '1000');
     expect(await ptn.balanceOf(alice.address)).to.be.equal(0);
@@ -117,9 +131,9 @@ describe('Farming', () => {
   });
 
   it('deposit/withdraw', async () => {
-    await farming.add(1000, lp1.address, true, 1, blockNumber + 10000);
-    await farming.add(1000, lp2.address, true, 1, blockNumber + 10000);
-    await farming.add(1000, lp3.address, true, 1, blockNumber + 10000);
+    await farming.add(1000, lp1.address, 1, blockNumber + 10000);
+    await farming.add(1000, lp2.address, 1, blockNumber + 10000);
+    await farming.add(1000, lp3.address, 1, blockNumber + 10000);
 
     await lp1.connect(alice).approve(farming.address, '100');
     await farming.connect(alice).deposit(0, '20');
@@ -141,24 +155,47 @@ describe('Farming', () => {
     expect(await lp1.balanceOf(bob.address)).to.be.equal('2000');
   });
 
-  it('deposit/withdraw:fail', async () => {
-    await farming.add(1000, lp1.address, true, 1, blockNumber + 10000);
+  it('withdraw:fail, staked amount is less than amount to withdraw', async () => {
+    await farming.add(1000, lp1.address, 1, blockNumber + 10000);
     await lp1.connect(alice).approve(farming.address, '100');
-
-    await farming.connect(alice).deposit(0, '20');
-    await farming.connect(alice).withdraw(0, '10');
+    // Attempt to withdraw before depositing
     await expect(farming.connect(alice).withdraw(0, '60'))
       .to.be.revertedWith('withdraw: not good');
-    await expect(farming.connect(alice).withdraw(1, '0')).to.be.reverted;
+    // Alice deposited 20 tokens, than withdrew 10 tokens
+    await farming.connect(alice).deposit(0, '20');
+    await farming.connect(alice).withdraw(0, '10');
+    // Attempt to withdraw 60 tokens now, but this time Alice has only 10 tokens
+    await expect(farming.connect(alice).withdraw(0, '60'))
+      .to.be.revertedWith('withdraw: not good');
+  });
+
+  it('withdraw:fail, pool does not exsist', async () => {
+    // Attempt to withdraw from a pool when there are no pools at all
+    await expect(farming.connect(alice).withdraw(0, '0')).to.be.revertedWith('Pool does not exist');
+    // Adding the fist pool with id 0
+    await farming.add(1000, lp1.address, 1, blockNumber + 10000);
+    await lp1.connect(alice).approve(farming.address, '100');
+    await farming.connect(alice).deposit(0, '20');
+    // Attempt to withdraw from a pool that does not exist (id 1)
+    await expect(farming.connect(alice).withdraw(1, '0')).to.be.revertedWith('Pool does not exist');
+  });
+
+  it('deposit:fail, pool does not exsist', async () => {
+    // Attempt to deposit to a pool when there are no pools at all
+    await expect(farming.connect(alice).deposit(0, '0')).to.be.revertedWith('Pool does not exist');
+    // Adding the fist pool with id 0
+    await farming.add(1000, lp1.address, 1, blockNumber + 10000);
+    // Attempt to deposit to a pool that does not exist (id 1)
+    await expect(farming.connect(alice).deposit(1, '0')).to.be.revertedWith('Pool does not exist');
   });
 
   it('update multiplier', async () => {
-    await farming.add('1000', lp1.address, true, 2, blockNumber + 10000);
-    await farming.add('1000', lp2.address, true, 2, blockNumber + 10000);
-    await farming.add('1000', lp3.address, true, 2, blockNumber + 10000);
+    await farming.add('1000', lp1.address, 2, blockNumber + 10000);
+    await farming.add('1000', lp2.address, 2, blockNumber + 10000);
+    await farming.add('1000', lp3.address, 2, blockNumber + 10000);
 
     await mineUpTo(blockNumber + 400);
-
+    // Setting multiplier to 0 for the first and the second pool
     await farming.updateMultiplier(0, 0);
     await farming.updateMultiplier(1, 0);
 
@@ -168,7 +205,8 @@ describe('Farming', () => {
     await farming.connect(bob).deposit(0, '100');
     await farming.connect(alice).deposit(0, 0);
     await farming.connect(bob).deposit(0, 0);
-
+    // Alice and Bob should not have any PTN tokens,
+    // multiplier had been set to 0 before they deposited
     expect(await ptn.balanceOf(alice.address)).to.be.equal('0');
     expect(await ptn.balanceOf(bob.address)).to.be.equal('0');
 
@@ -186,7 +224,61 @@ describe('Farming', () => {
     await farming.connect(alice).withdraw(0, '100');
     await farming.connect(bob).withdraw(0, '100');
   });
+
+  it('updateMultiplier:fail, pool does not exsist', async () => {
+    // Attempt to updateMultiplier to a pool when there are no pools at all
+    await expect(farming.updateMultiplier(0, 0)).to.be.revertedWith('Pool does not exist');
+    // Adding the fist pool with id 0
+    await farming.add(1000, lp1.address, 1, blockNumber + 10000);
+    // Attempt to deposit to a pool that does not exist (id 1)
+    await expect(farming.updateMultiplier(1, 0)).to.be.revertedWith('Pool does not exist');
+  });
+
+  it('set:fail, pool does not exsist', async () => {
+    // Attempt to set an allocation point to a pool when there are no pools at all
+    await expect(farming.set(0, 1000)).to.be.revertedWith('Pool does not exist');
+    // Adding the fist pool with id 0
+    await farming.add(1000, lp1.address, 1, blockNumber + 10000);
+    // Attempt to set an allocation point to a pool that does not exist (id 1)
+    await expect(farming.set(1, 500)).to.be.revertedWith('Pool does not exist');
+  });
+
+  it('set:fail, totalAllocPoint cannot be 0', async () => {
+    // Adding 2 pools
+    await farming.add(1000, lp1.address, 1, blockNumber + 10000);
+    await farming.add(2000, lp2.address, 1, blockNumber + 10000);
+    // Attempt to set an allocation point to each pool to 0
+    // It should work for the first time
+    await farming.set(0, 0);
+    expect(await farming.totalAllocPoint()).to.be.equal('2000');
+    // Here is should fail, because totalAllocPoint cannot be 0.
+    // At least one pool should have an allocation point greater than 0
+    // If you want to stop the whole farming consider using `updatePtnPerBlock`
+    // or `updateMultiplier` for each pool.
+    await expect(farming.set(1, 0)).to.be.revertedWith('Should be more than zero');
+  });
+
+  it('pendingPtn:fail, pool does not exsist', async () => {
+    // Attempt to get pendingPtn from a pool when there are no pools at all
+    await expect(farming.pendingPtn(0, alice.address)).to.be.revertedWith('Pool does not exist');
+    // Adding the fist pool with id 0
+    await farming.add(1000, lp1.address, 1, blockNumber + 10000);
+    await lp1.connect(alice).approve(farming.address, '100');
+    await farming.connect(alice).deposit(0, '100');
+    await farming.connect(alice).withdraw(0, '0');
+    // Attempt to get pendingPtn from a pool that does not exist (id 1)
+    await expect(farming.pendingPtn(1, alice.address)).to.be.revertedWith('Pool does not exist');
+  });
+
   describe('Farming Redeployable test', () => {
+    it('deploy:fail, ptn cannot be the zero address', async () => {
+      await expect(farmingFactory.deploy(constants.AddressZero, '1000', '0', minter.address))
+        .to.be.revertedWith('PTN cannot be the zero address');
+    });
+    it('deploy:fail, multisig cannot be the zero address', async () => {
+      await expect(farmingFactory.deploy(ptn.address, '1000', '0', constants.AddressZero))
+        .to.be.revertedWith('Multisig cannot be the zero address');
+    });
     it('should set correct state variables', async () => {
       farming = await farmingFactory.deploy(ptn.address, '1000', '0', minter.address);
       await farming.deployed();
@@ -202,25 +294,37 @@ describe('Farming', () => {
       expect(await ptn.hasRole((await ptn.MINTER_ROLE()), farming.address)).to.be.equal(true);
     });
     it('should allow emergency withdraw', async () => {
+      blockNumber = await ethers.provider.getBlockNumber();
       // 100 per block farming rate starting at block `blockNumber + 100`
       // with bonus until block 1000
       farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 100, minter.address);
       await farming.deployed();
 
-      await farming.add('100', lp1.address, true, 1, '10000');
-
+      await farming.add('100', lp1.address, 1, '10000');
       await lp1.connect(bob).approve(farming.address, '1000');
-
       await farming.connect(bob).deposit(0, '100');
 
       expect(await lp1.balanceOf(bob.address)).to.equal('1900');
-
       await farming.connect(bob).emergencyWithdraw(0);
-
       expect(await lp1.balanceOf(bob.address)).to.equal('2000');
     });
 
+    it('emergency withdraw: fail, pool does not exsist', async () => {
+      blockNumber = await ethers.provider.getBlockNumber();
+      // 100 per block farming rate starting at block `blockNumber + 100`
+      // with bonus until block 1000
+      farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 100, minter.address);
+      await farming.deployed();
+      // Attempt to call emergencyWithdraw from a pool when there are no pools at all
+      await expect(farming.connect(bob).emergencyWithdraw(0)).to.be.revertedWith('Pool does not exist');
+      // Adding the fist pool with id 0
+      await farming.add('100', lp1.address, 1, '10000');
+      // Attempt to withdraw from pool that does not exist (id 1)
+      await expect(farming.connect(bob).emergencyWithdraw(1)).to.be.revertedWith('Pool does not exist');
+    });
+
     it('should give out PTNs only after farming time [ @skip-on-coverage ]', async () => {
+      blockNumber = await ethers.provider.getBlockNumber();
       // 100 per block farming rate starting at block `blockNumber + 100`
       farming = await farmingFactory.deploy(ptn.address, '1000', blockNumber + 100, minter.address);
       await farming.deployed();
@@ -234,15 +338,15 @@ describe('Farming', () => {
       const lp8 = await lpFactory.deploy('10000000000');
       const lp9 = await lpFactory.deploy('10000000000');
 
-      await farming.add('2000', lp1.address, true, 1, '10000');
-      await farming.add('1000', lp2.address, true, 1, '10000');
-      await farming.add('500', lp3.address, true, 1, '10000');
-      await farming.add('500', lp4.address, true, 1, '10000');
-      await farming.add('500', lp5.address, true, 1, '10000');
-      await farming.add('500', lp6.address, true, 1, '10000');
-      await farming.add('500', lp7.address, true, 1, '10000');
-      await farming.add('100', lp8.address, true, 1, '10000');
-      await farming.add('100', lp9.address, true, 1, '10000');
+      await farming.add('2000', lp1.address, 1, '10000');
+      await farming.add('1000', lp2.address, 1, '10000');
+      await farming.add('500', lp3.address, 1, '10000');
+      await farming.add('500', lp4.address, 1, '10000');
+      await farming.add('500', lp5.address, 1, '10000');
+      await farming.add('500', lp6.address, 1, '10000');
+      await farming.add('500', lp7.address, 1, '10000');
+      await farming.add('100', lp8.address, 1, '10000');
+      await farming.add('100', lp9.address, 1, '10000');
 
       expect(await farming.poolLength()).to.be.equal(9);
 
@@ -258,10 +362,10 @@ describe('Farming', () => {
       expect(await ptn.balanceOf(bob.address)).to.equal('0');
       await mineUpTo(blockNumber + 99);
 
-      await farming.connect(bob).deposit(0, '0'); // block `blockNumber + 100`
+      await farming.connect(bob).withdraw(0, '0'); // block `blockNumber + 100`
       expect(await ptn.balanceOf(bob.address)).to.equal('0');
 
-      await farming.connect(bob).deposit(0, '0'); // block `blockNumber + 101`
+      await farming.connect(bob).withdraw(0, '0'); // block `blockNumber + 101`
       expect(await ptn.balanceOf(bob.address)).to.equal('350');
 
       await mineUpTo(blockNumber + 104);
@@ -272,14 +376,15 @@ describe('Farming', () => {
     });
 
     it('should not distribute ptns if no one deposit [ @skip-on-coverage ]', async () => {
+      blockNumber = await ethers.provider.getBlockNumber();
       // 100 per block farming rate starting at block `blockNumber + 200`
       farming = await farmingFactory.deploy(ptn.address, '1000', blockNumber + 200, minter.address);
       lp3 = await lpFactory.deploy('10000000000');
       await farming.deployed();
       await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
-      await farming.add('1000', lp1.address, true, 1, '10000');
-      await farming.add('1000', lp2.address, true, 1, '10000');
-      await farming.add('1000', lp3.address, true, 1, '10000');
+      await farming.add('1000', lp1.address, 1, '10000');
+      await farming.add('1000', lp2.address, 1, '10000');
+      await farming.add('1000', lp3.address, 1, '10000');
       await lp1.connect(bob).approve(farming.address, '1000');
       await mineUpTo(blockNumber + 199);
       expect(await ptn.totalSupply()).to.equal('0');
@@ -298,11 +403,12 @@ describe('Farming', () => {
     });
 
     it('should distribute ptns properly for each staker [ @skip-on-coverage ]', async () => {
+      blockNumber = await ethers.provider.getBlockNumber();
       // 100 per block farming rate starting at block `blockNumber + 300`
       farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 300, minter.address);
       await farming.deployed();
       await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
-      await farming.add('100', lp1.address, true, 1, '10000');
+      await farming.add('100', lp1.address, 1, '10000');
       await lp1.connect(alice).approve(farming.address, '1000');
       await lp1.connect(bob).approve(farming.address, '1000');
       await lp1.connect(carol).approve(farming.address, '1000');
@@ -350,59 +456,21 @@ describe('Farming', () => {
       expect(await lp1.balanceOf(carol.address)).to.equal('2000');
     });
 
-    // it('should distribute ptns properly for each staker on coverage', async () => {
-    // //   // 100 per block farming rate starting at block 300
-    //   farming = await farmingFactory.deploy(ptn.address, '100', '300', minter.address);
-    //   await farming.deployed();
-    //   await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
-    //   await farming.add('100', lp.address, true, 1, '10000');
-    //   await lp.connect(alice).approve(farming.address, '1000');
-    //   await lp.connect(bob).approve(farming.address, '1000');
-    //   await lp.connect(carol).approve(farming.address, '1000');
-    //   // Alice deposits 10 LPs at block 310
-    //   await mineUpTo(309);
-    //   await farming.connect(alice).deposit(0, '10');
-    //   // Bob deposits 20 LPs at block 314
-    //   await mineUpTo(313);
-    //   await farming.connect(bob).deposit(0, '20');
-    //   // Carol deposits 30 LPs at block 318
-    //   await mineUpTo(317);
-    //   await farming.connect(carol).deposit(0, '30');
-    //   // Alice deposits 10 more LPs at block 320. At this point:
-    //   await mineUpTo(319);
-    //   await farming.connect(alice).deposit(0, '10');
-    //   // Bob withdraws 5 LPs at block 330. At this point:
-    //   await mineUpTo(329);
-    //   await farming.connect(bob).withdraw(0, '5');
-    //   // Alice withdraws 20 LPs at block 340.
-    //   // Bob withdraws 15 LPs at block 350.
-    //   // Carol withdraws 30 LPs at block 360.
-    //   await mineUpTo(339);
-    //   await farming.connect(alice).withdraw(0, '20');
-    //   await mineUpTo(349);
-    //   await farming.connect(bob).withdraw(0, '15');
-    //   await mineUpTo(359);
-    //   await farming.connect(carol).withdraw(0, '30');
-    //   // All of them should have 1000 LPs back.
-    //   expect(await lp.balanceOf(alice.address)).to.equal('1000');
-    //   expect(await lp.balanceOf(bob.address)).to.equal('1000');
-    //   expect(await lp.balanceOf(carol.address)).to.equal('1000');
-    // });
-
     it('should give proper ptns allocation to each pool [ @skip-on-coverage ]', async () => {
+      blockNumber = await ethers.provider.getBlockNumber();
       // 100 per block farming rate starting at block `blockNumber + 400`
       farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 400, minter.address);
       await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
       await lp1.connect(alice).approve(farming.address, '1000');
       await lp2.connect(bob).approve(farming.address, '1000');
       // Add first LP to the pool with allocation 1
-      await farming.add('10', lp1.address, true, 1, '10000');
+      await farming.add('10', lp1.address, 1, '10000');
       // Alice deposits 10 LPs at block `blockNumber + 410`
       await mineUpTo(blockNumber + 409);
       await farming.connect(alice).deposit(0, '10');
       // Add LP2 to the pool with allocation 2 at block `blockNumber + 420`
       await mineUpTo(blockNumber + 419);
-      await farming.add('20', lp2.address, true, 1, '10000');
+      await farming.add('20', lp2.address, 1, '10000');
 
       // Alice should have 1000 pending reward
       expect(await farming.pendingPtn(0, alice.address)).to.equal('1000');
@@ -434,78 +502,117 @@ describe('Farming', () => {
       expect(await farming.pendingPtn(0, alice.address)).to.equal('1700');
       expect(await farming.pendingPtn(1, bob.address)).to.equal('1066');
     });
-    // it('should give proper ptns allocation to each pool on-coverage', async () => {
-    //   // 100 per block farming rate starting at block 400
-    //   farming = await farmingFactory.deploy(ptn.address, '100', '400', minter.address);
-    //   await ptn.grantRole((await ptn.MINTER_ROLE()), farming.address);
-    //   await lp.connect(alice).approve(farming.address, '1000');
-    //   await lp2.connect(bob).approve(farming.address, '1000');
-    //   // Add first LP to the pool with allocation 1
-    //   await farming.add('10', lp.address, true, 1, '10000');
-    //   // Alice deposits 10 LPs at block 410
-    //   await mineUpTo(409);
-    //   await farming.connect(alice).deposit(0, '10');
-    //   // Add LP2 to the pool with allocation 2 at block 420
-    //   await mineUpTo(419);
-    //   await farming.add('20', lp2.address, true, 1, '10000');
-
-    //   // Bob deposits 10 LP2s at block 425
-    //   await mineUpTo(424);
-    //   await farming.connect(bob).deposit(1, '5');
-
-    //   await mineUpTo(430);
-
-    //   await mineUpTo(440);
-    //   await farming.updatePtnPerBlock(0);
-    //   expect(await farming.pendingPtn(0, alice.address)).to.equal('166');
-    //   expect(await farming.pendingPtn(1, bob.address)).to.equal('66');
-    //   await mineUpTo(450);
-    //   expect(await farming.pendingPtn(0, alice.address)).to.equal('166');
-    //   expect(await farming.pendingPtn(1, bob.address)).to.equal('66');
-    //   await mineUpTo(460);
-    //   expect(await farming.pendingPtn(0, alice.address)).to.equal('166');
-    //   expect(await farming.pendingPtn(1, bob.address)).to.equal('66');
-    //   await mineUpTo(550);
-    //   expect(await farming.pendingPtn(0, alice.address)).to.equal('166');
-    //   expect(await farming.pendingPtn(1, bob.address)).to.equal('66');
-    // });
 
     it('should update allocation to each pool', async () => {
+      blockNumber = await ethers.provider.getBlockNumber();
       // 100 per block farming rate starting at block `blockNumber + 600`
       farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 600, minter.address);
       await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
       await lp1.connect(alice).approve(farming.address, '1000');
       await lp2.connect(bob).approve(farming.address, '1000');
-      // Add first LP to the pool with allocation 1
-      await farming.add('10', lp1.address, true, 1, '10000');
+      // Add first LP to the pool with allocation 10
+      await farming.add('10', lp1.address, 1, '10000');
+      expect((await farming.poolInfo(0)).allocPoint).to.equal('10');
       // Alice deposits 10 LPs at block `blockNumber + 610`
       await mineUpTo(blockNumber + 609);
       await farming.connect(alice).deposit(0, '10');
-      // Add LP2 to the pool with allocation 2 at block `blockNumber + 620`
+      // Add LP2 to the pool with allocation 20 at block `blockNumber + 620`
       await mineUpTo(blockNumber + 619);
-      await farming.add('20', lp2.address, true, 1, '10000');
+      await farming.add('20', lp2.address, 1, '10000');
+      // Alice: 10 blocks * 10/10 * 100ptn per block
       expect(await farming.pendingPtn(0, alice.address)).to.equal('1000');
+      // Allocations
+      expect(await farming.totalAllocPoint()).to.equal('30');
+      expect((await farming.poolInfo(1)).allocPoint).to.equal('20');
       // Bob deposits 10 LP2s at block `blockNumber + 625`
       await mineUpTo(blockNumber + 624);
       await farming.connect(bob).deposit(1, '5');
+      // Alice: 10 blocks * 10/10 * 100ptn per block + 5 blocks * 10/30 * 100 ptn per block
+      expect(await farming.pendingPtn(0, alice.address)).to.equal('1166');
 
-      await mineUpTo(blockNumber + 640);
-      await farming.set(0, 0, true);
-      await expect(farming.set(1, 0, true)).to.be.revertedWith('Should be more than zero');
+      await mineUpTo(blockNumber + 639);
+      // Block 640: update allocation point of LP1 to 20
+      await farming.set(0, 20);
+      // Alice: 10 blocks * 10/10 * 100ptn per block + 20 blocks * 10/30 * 100 ptn per block
+      expect(await farming.pendingPtn(0, alice.address)).to.equal('1666');
+      // Bob: 15 blocks * 20/30 * 100ptn per block
+      expect(await farming.pendingPtn(1, bob.address)).to.equal('1000');
+      // Allocations
+      expect(await farming.totalAllocPoint()).to.equal('40');
+      expect((await farming.poolInfo(0)).allocPoint).to.equal('20');
+
+      await mineUpTo(blockNumber + 649);
       await farming.updatePtnPerBlock(0);
-      expect(await farming.pendingPtn(0, alice.address)).to.equal('1700');
-      expect(await farming.pendingPtn(1, bob.address)).to.equal('1266');
-      await mineUpTo(blockNumber + 650);
-      expect(await farming.pendingPtn(0, alice.address)).to.equal('1700');
-      expect(await farming.pendingPtn(1, bob.address)).to.equal('1266');
-      await mineUpTo(blockNumber + 660);
-      expect(await farming.pendingPtn(0, alice.address)).to.equal('1700');
-      expect(await farming.pendingPtn(1, bob.address)).to.equal('1266');
-      await mineUpTo(blockNumber + 670);
-      await farming.connect(alice).deposit(0, 0);
-      await farming.connect(bob).deposit(1, 0);
-      expect(await farming.pendingPtn(0, alice.address)).to.equal(0);
-      expect(await farming.pendingPtn(1, bob.address)).to.equal(0);
+      // Alice: 10 blocks * 10/10 * 100ptn per block
+      // + 20 blocks * 10/30 * 100 ptn per block
+      // + 10 blocks * 20/40 * 100 ptn per block
+      expect(await farming.pendingPtn(0, alice.address)).to.equal('2166');
+      // Bob: 15 blocks * 20/30 * 100ptn per block
+      // + 10 blocks * 20/40 * 100 ptn per block
+      expect(await farming.pendingPtn(1, bob.address)).to.equal('1500');
+
+      await mineUpTo(blockNumber + 654);
+      // Block 655: update allocation point of LP1 to the same value of 20
+      expect(await farming.set(0, 20)).to.emit(farming, 'Set').withArgs(0, 20);
+      // Allocations
+      expect(await farming.totalAllocPoint()).to.equal('40');
+      expect((await farming.poolInfo(0)).allocPoint).to.equal('20');
+    });
+
+    it('should update allocation to each pool with multiplier', async () => {
+      blockNumber = await ethers.provider.getBlockNumber();
+      // 100 per block farming rate starting at block `blockNumber + 700`
+      farming = await farmingFactory.deploy(ptn.address, '100', blockNumber + 700, minter.address);
+      await ptn.connect(multisig).grantRole((await ptn.MINTER_ROLE()), farming.address);
+      await lp1.connect(alice).approve(farming.address, '1000');
+      await lp2.connect(bob).approve(farming.address, '1000');
+      // Add first LP to the pool with allocation 10
+      await farming.add('10', lp1.address, 10, blockNumber + 730);
+      expect((await farming.poolInfo(0)).allocPoint).to.equal('10');
+      // Alice deposits 10 LPs at block `blockNumber + 710`
+      await mineUpTo(blockNumber + 709);
+      await farming.connect(alice).deposit(0, '10');
+      // Add LP2 to the pool with allocation 20 at block `blockNumber + 720`
+      await mineUpTo(blockNumber + 719);
+      await farming.add('20', lp2.address, 1, '10000');
+      // Alice: 10 blocks * 10 * 10/10 * 100ptn per block
+      expect(await farming.pendingPtn(0, alice.address)).to.equal('10000');
+      // Allocations
+      expect(await farming.totalAllocPoint()).to.equal('30');
+      expect((await farming.poolInfo(1)).allocPoint).to.equal('20');
+      // Bob deposits 10 LP2s at block `blockNumber + 725`
+      await mineUpTo(blockNumber + 724);
+      await farming.connect(bob).deposit(1, '5');
+      // Alice: 10 blocks * 10/10 * 10 * 100ptn per block
+      // + 5 blocks * 10/30 * 10 * 100 ptn per block
+      expect(await farming.pendingPtn(0, alice.address)).to.equal('11666');
+
+      await mineUpTo(blockNumber + 739);
+      // Block 740: update allocation point of LP1 to 20
+      await farming.set(0, 20);
+      // Alice: 10 blocks * 10/10 * 10 * 100ptn per block
+      // + 10 blocks * 10/30 * 10 * 100 ptn per block
+      // + 10 blocks * 10/30 * 100 ptn per block
+      // 10000 + 3333 + 333 = 13666
+      expect(await farming.pendingPtn(0, alice.address)).to.equal('13666');
+      // Bob: 15 blocks * 20/30 * 100ptn per block
+      expect(await farming.pendingPtn(1, bob.address)).to.equal('1000');
+      // Allocations
+      expect(await farming.totalAllocPoint()).to.equal('40');
+      expect((await farming.poolInfo(0)).allocPoint).to.equal('20');
+
+      await mineUpTo(blockNumber + 749);
+      // Block 750
+      await farming.updatePtnPerBlock(0);
+      // Alice: 10 blocks * 10/10 * 10 * 100ptn per block
+      // + 10 blocks * 10/30 * 10 * 100 ptn per block
+      // + 10 blocks * 10/30 * 100 ptn per block
+      // + 10 blocks * 20/40 * 100 ptn per block
+      // 10000 + 3333 + 333 + 500 = 14166
+      expect(await farming.pendingPtn(0, alice.address)).to.equal('14166');
+      // Bob: 15 blocks * 20/30 * 100ptn per block
+      // + 10 blocks * 20/40 * 100 ptn per block
+      expect(await farming.pendingPtn(1, bob.address)).to.equal('1500');
     });
   });
 });

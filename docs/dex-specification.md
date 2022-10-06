@@ -859,7 +859,7 @@ Update the start and end blocks before the rewards accumulation has started. The
 
 This function can only be called by the contract owner ([multisig contract](#multisignature-wallet)).
 
-**Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the start block value with `updateStartAndEndBlocks`. Changing the start block also leads to changing the pool address.
+**Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the start block value with `updateStartAndEndBlocks`. Since `startBlock` is used to derive the pool address, if `startBlock` is updated, you would need to use the old `startBlock` value to derive the pool address.
 
 ###### Staking: `updateRewardPerBlock`
 
@@ -867,7 +867,7 @@ Update reward per block. The reward can only be updated before the reward accumu
 
 This function can only be called by the contract owner ([multisig contract](#multisignature-wallet)).
 
-**Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool  address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the reward token value with `updateRewardPerBlock`. Changing the reward also leads to changing the pool address.
+**Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool  address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the reward token value with `updateRewardPerBlock`.
 
 ###### Staking: `hasUserLimit`
 

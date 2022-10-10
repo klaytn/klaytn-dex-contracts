@@ -3,24 +3,14 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
-import hre, { ethers } from 'hardhat';
-import { BigNumber, Contract } from 'ethers';
-import fs from 'fs';
+import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
 import * as dotenv from 'dotenv';
+import { writeDeploymentForSubgraph } from './helpers';
 
-interface DeployDetails {
-  [key: string]: {
-    address: string;
-    startBlock: number;
-  }
-}
-interface Networks {
-  [key: string]: DeployDetails
-}
 let adminsList: string[];
 let sigRequired: string;
 let rewardPerBlock: BigNumber;
-let config: Networks;
 dotenv.config();
 
 if (!process.env.ADMIN_LIST && !process.env.SIG_REQUIRED) {
@@ -35,33 +25,6 @@ if (!process.env.REWARD_PER_BLOCK) {
 } else {
   rewardPerBlock = BigNumber.from(process.env.REWARD_PER_BLOCK as string);
 }
-
-const writeDeploymentForSubgraph = async (
-  type: string,
-  contractInstance: Contract,
-): Promise<void> => {
-  const { provider, name } = hre.network;
-  const txReceipt = await provider.send('eth_getTransactionReceipt', [contractInstance.deployTransaction.hash]);
-  config = {
-    [name]:
-    {
-      [type]: {
-        address: contractInstance.address,
-        startBlock: BigNumber.from(txReceipt.blockNumber).toNumber(),
-      },
-    },
-  };
-  if (!fs.existsSync('./deployments')) {
-    fs.mkdirSync('./deployments');
-  }
-  if (fs.existsSync(`./deployments/networks-${type}.json`)) {
-    const oldConfig = JSON.parse(fs.readFileSync(`./deployments/networks-${type}.json`, 'utf8'));
-    config = { ...oldConfig, ...config };
-    fs.writeFileSync(`./deployments/networks-${type}.json`, JSON.stringify(config, null, 2));
-  } else {
-    fs.writeFileSync(`./deployments/networks-${type}.json`, JSON.stringify(config, null, 2));
-  }
-};
 
 async function main() {
   const accounts = await ethers.getSigners();

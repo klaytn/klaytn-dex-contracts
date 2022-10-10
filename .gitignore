@@ -10,3 +10,6 @@ artifacts
 
 #Mac files
 .DS_Store
+
+#Deploy files
+deployments

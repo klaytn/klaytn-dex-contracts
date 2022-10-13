@@ -41,3 +41,7 @@ or launch the deployment script
 npx hardhat run scripts/deployDEX.ts
 ```
 to simulate the deployment process to the forked network.
+
+## Documentation
+
+The repository contains Klaytn-DEX specification and audit reports ([learn more](./docs/README.md)).

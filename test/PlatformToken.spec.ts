@@ -1,9 +1,9 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import { BigNumber, constants } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
-import { PlatformToken } from '../typechain/tokens/PlatformToken';
+import { PlatformToken } from '../typechain/contracts/tokens/PlatformToken';
 
 describe('PlatformToken', () => {
   let alice: SignerWithAddress;
@@ -26,6 +26,12 @@ describe('PlatformToken', () => {
     await token.deployed();
   });
 
+  it('deploy:fail, multisig cannot be the zero address', async () => {
+    const ptn = await ethers.getContractFactory('PlatformToken');
+    await expect(ptn.deploy('Platform Token', 'PTN', constants.AddressZero))
+      .to.be.revertedWith('Multisig cannot be the zero address');
+  });
+
   it('initial nonce is 0', async () => {
     expect(await token.nonces(alice.address)).to.be.equal(0);
   });
@@ -34,6 +40,7 @@ describe('PlatformToken', () => {
     // KIP-13 Identifiers can be found https://kips.klaytn.foundation/KIPs/kip-7
     expect(await token.supportsInterface('0x65787371')).to.eq(true); // 0x65787371 is IKIP7 interfaceID
     expect(await token.supportsInterface('0xa219a025')).to.eq(true); // 0xa219a025 is IKIP7Metadata interfaceID
+    expect(await token.supportsInterface('0xe90b74c5')).to.eq(true); // 0xe90b74c5 is IPlatformToken interfaceID
     expect(await token.supportsInterface('0x9d188c22')).to.eq(false); // 0x9d188c22 is IKIP7TokenReceiver interfaceID
   });
 

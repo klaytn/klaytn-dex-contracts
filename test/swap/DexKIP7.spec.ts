@@ -7,8 +7,8 @@ import {
 import { constants } from 'ethers';
 import { getPermitSignature, getDomainSeparator } from '../shared/utilities';
 import { factoryFixture } from '../shared/fixtures';
-import { DexKIP7Test } from '../../typechain/mocks/DexKIP7Test';
-import { DexKIP7Test__factory } from '../../typechain/factories/mocks/DexKIP7Test__factory';
+import { DexKIP7Test } from '../../typechain/contracts/mocks/DexKIP7Test';
+import { DexKIP7Test__factory } from '../../typechain/factories/contracts/mocks/DexKIP7Test__factory';
 
 const TOTAL_SUPPLY = ethers.utils.parseEther('10000');
 const TEST_AMOUNT = ethers.utils.parseEther('10');
@@ -70,6 +70,13 @@ describe('DexKIP7', () => {
       .to.be.rejectedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
   });
 
+  it('safeTransfer:to the contract', async () => {
+    const kip7Holder = await (await ethers.getContractFactory('KIP7Holder')).deploy();
+    await token['safeTransfer(address,uint256)'](kip7Holder.address, TEST_AMOUNT);
+    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT));
+    expect(await token.balanceOf(kip7Holder.address)).to.eq(TEST_AMOUNT);
+  });
+
   it('transfer:fail', async () => {
     await expect(token.transfer(
       other.address,
@@ -77,6 +84,10 @@ describe('DexKIP7', () => {
     )).to.be.reverted; // ds-math-sub-underflow
     await expect(token.connect(other)
       .transfer(wallet.address, 1)).to.be.reverted; // ds-math-sub-underflow
+    await expect(token.transfer(
+      constants.AddressZero,
+      TEST_AMOUNT,
+    )).to.be.revertedWith('KIP7: transfer to the zero address');
   });
 
   it('transferFrom', async () => {
@@ -99,6 +110,25 @@ describe('DexKIP7', () => {
     expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
   });
 
+  it('transferFrom:fail', async () => {
+    await token.approve(other.address, TEST_AMOUNT);
+    await expect(token.connect(other).transferFrom(
+      constants.AddressZero,
+      other.address,
+      TEST_AMOUNT,
+    )).to.be.revertedWith('KIP7: insufficient allowance');
+  });
+
+  it('safeTransferFrom', async () => {
+    await token.approve(other.address, TEST_AMOUNT);
+    await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, other.address, TEST_AMOUNT))
+      .to.emit(token, 'Transfer')
+      .withArgs(wallet.address, other.address, TEST_AMOUNT);
+    expect(await token.allowance(wallet.address, other.address)).to.eq(0);
+    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT));
+    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
+  });
+
   it('safeTransferFrom:max', async () => {
     await token.approve(other.address, constants.MaxUint256);
     await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, other.address, TEST_AMOUNT))
@@ -113,10 +143,10 @@ describe('DexKIP7', () => {
     await expect(token['safeTransferFrom(address,address,uint256)'](wallet.address, other.address, TEST_AMOUNT))
       .to.be.revertedWith('KIP7: insufficient allowance');
     await expect(token['safeTransferFrom(address,address,uint256)'](constants.AddressZero, other.address, TEST_AMOUNT))
-      .to.be.revertedWith('KIP7: transfer from the zero address');
-    await expect(token['safeTransferFrom(address,address,uint256)'](wallet.address, constants.AddressZero, TEST_AMOUNT))
-      .to.be.revertedWith('KIP7: transfer to the zero address');
+      .to.be.revertedWith('KIP7: insufficient allowance');
     await token.approve(other.address, constants.MaxUint256);
+    await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, constants.AddressZero, TEST_AMOUNT))
+      .to.be.revertedWith('KIP7: transfer to the zero address');
     await expect(token.connect(other)['safeTransferFrom(address,address,uint256)'](wallet.address, token.address, TEST_AMOUNT))
       .to.be.rejectedWith("Transaction reverted: function selector was not recognized and there's no fallback function");
   });

@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.12;
 
-import "../utils/access/Ownable.sol";
-import "../utils/ReentrancyGuard.sol";
-import "../interfaces/IKIP7Metadata.sol";
+import "@klaytn/contracts/access/Ownable.sol";
+import "@klaytn/contracts/security/ReentrancyGuard.sol";
+import "@klaytn/contracts/KIP/interfaces/IKIP7Metadata.sol";
 import "../libraries/TransferHelper.sol";
-import "../utils/SafeCast.sol";
+import "@klaytn/contracts/utils/math/SafeCast.sol";
 
 contract StakingInitializable is Ownable, ReentrancyGuard {
     using SafeCast for uint256;
     // The address of the smart chef factory
     address public immutable STAKING_FACTORY;
     // The precision factor
-    uint256 public PRECISION_FACTOR;
+    uint256 public constant PRECISION_FACTOR = 10e18;
 
     struct PoolInfo {
         // Whether it is initialized
@@ -91,7 +91,13 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     ) external {
         require(!pool.isInitialized, "Already initialized");
         require(msg.sender == STAKING_FACTORY, "Not factory");
+        require(_startBlock < _rewardEndBlock, "Invalid start block");
 
+        uint256 decimalsRewardToken = uint256(
+            IKIP7Metadata(_rewardToken).decimals()
+        );
+        require(decimalsRewardToken < 30, "Must be less than 30");
+        
         // Make this contract initialized
         pool.isInitialized = true;
 
@@ -108,13 +114,6 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
             pool.numberBlocksForUserLimit = _numberBlocksForUserLimit
                 .toUint64();
         }
-
-        uint256 decimalsRewardToken = uint256(
-            IKIP7Metadata(_rewardToken).decimals()
-        );
-        require(decimalsRewardToken < 30, "Must be less than 30");
-
-        PRECISION_FACTOR = uint256(10**(uint256(30) - decimalsRewardToken));
 
         // Transfer ownership to the multisig address who becomes owner of the contract
         transferOwnership(_multisig);
@@ -207,21 +206,22 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
         if (amountToTransfer > 0) {
             TransferHelper.safeTransfer(
                 pool.stakedToken,
-                address(msg.sender),
+                msg.sender,
                 amountToTransfer
             );
         }
 
-        emit EmergencyWithdraw(msg.sender, user.amount);
+        emit EmergencyWithdraw(msg.sender, amountToTransfer);
     }
 
     /**
      * @notice Transfers reward tokens from the contract to the specified address
      * @dev Only callable by multisig contract. Needs to be for emergency.
      * @param _amount: Amount of reward tokens to transfer
-     * @param _recipient: A wallet's address to trasfer tokens to
+     * @param _recipient: A wallet's address to transfer tokens to
      */
     function emergencyRewardWithdraw(uint256 _amount, address _recipient) external onlyOwner {
+        require(_recipient != address(0), "Withdraw to the zero address");
         TransferHelper.safeTransfer(pool.rewardToken, _recipient, _amount);
     }
 
@@ -232,6 +232,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
      * @dev Callable by multisig contract
      */
     function recoverToken(address _token, address _recipient) external onlyOwner {
+        require(_recipient != address(0), "Recover to the zero address");
         require(
             _token != pool.stakedToken,
             "Operations: Cannot recover staked token"
@@ -354,7 +355,7 @@ contract StakingInitializable is Ownable, ReentrancyGuard {
     /**
      * @notice Update reward variables of the given pool to be up-to-date.
      * @dev If the current block number is higher than the reward-end block,
-     * the pool rewads are no longer updated (stopped).
+     * the pool rewadrs are no longer updated (stopped).
      */
     function _updatePool() internal {
         if (block.number > pool.lastRewardBlock) {

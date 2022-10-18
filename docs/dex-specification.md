@@ -17,6 +17,7 @@ This document provides detailed specification for the Dex smart contracts, discu
 
 - [Introduction](#introduction)
   - [Dex](#dex)
+  - [DEX platform](#dex-platform)
   - [Constant Product Formula](#constant-product-formula)
     - [Invariant](#invariant)
   - [Token Types](#token-types)
@@ -25,6 +26,7 @@ This document provides detailed specification for the Dex smart contracts, discu
   - [Factory](#factory)
   - [Pair](#pair)
   - [Token Swap](#token-swap)
+    - [`DEXswap`](#dexswap)
   - [Liquidity Pool](#liquidity-pool)
   - [Liquidity Provider](#liquidity-provider)
   - [Liquidity Provider Fee](#liquidity-provider-fee)
@@ -37,6 +39,7 @@ This document provides detailed specification for the Dex smart contracts, discu
       - [Factory Contract: Functions](#factory-contract-functions)
         - [`createPair`](#createpair)
     - [`DexPair`](#dexpair)
+      - [Year 2038 Problem](#year-2038-problem)
       - [Pair Contract: Events](#pair-contract-events)
       - [Pair Contract: Functions](#pair-contract-functions)
         - [`mint`](#mint)
@@ -65,15 +68,23 @@ This document provides detailed specification for the Dex smart contracts, discu
       - [`deployPool`](#deploypool)
     - [`StakingInitializable`](#stakinginitializable)
       - [Staking: PoolInfo](#staking-poolinfo)
+        - [User Limit](#user-limit)
       - [Staking: UserInfo](#staking-userinfo)
       - [Staking: Events](#staking-events)
       - [Staking: Reward Debt and Pending Reward](#staking-reward-debt-and-pending-reward)
       - [Staking: Functions](#staking-functions)
         - [Staking: `_getMultiplier`](#staking-_getmultiplier)
         - [Staking: `_updatePool`](#staking-_updatepool)
-  - [`AccessControl`](#accesscontrol)
-    - [Roles](#roles)
-      - [Admin role](#admin-role)
+        - [Staking: `updateStartAndEndBlocks`](#staking-updatestartandendblocks)
+        - [Staking: `updateRewardPerBlock`](#staking-updaterewardperblock)
+        - [Staking: `hasUserLimit`](#staking-hasuserlimit)
+        - [Staking: `updatePoolLimitPerUser`](#staking-updatepoollimitperuser)
+  - [Access](#access)
+    - [`Ownable`](#ownable)
+      - [`Ownable`: Functions](#ownable-functions)
+    - [`AccessControl`](#accesscontrol)
+      - [Roles](#roles)
+        - [Admin role](#admin-role)
 - [Security Concerns](#security-concerns)
 - [Calculations](#calculations)
 - [Diagrams](#diagrams)
@@ -106,6 +117,8 @@ The `k` value in the [constant product formula](#constant-product-formula) is ca
 
 [Dex protocol](#dex) works with ERC20 and KIP7 token standards that implement APIs for fungible tokens within smart contracts.
 
+Note that deflationary tokens and tokens with commission on transfer are not supported on DEX.
+
 #### ERC20
 
 [ERC20](https://eips.ethereum.org/EIPS/eip-20) (Ethereum Request for Comments 20) is a token standard that was proposed by Fabian Vogelsteller. Dex supports all standard ERC20 implementations.
@@ -127,6 +140,18 @@ Pair is a smart contract deployed from the Dex Factory that enables trading betw
 Token swaps in Dex are a simple way to trade one ERC-20 or KIP7 token for another. Each pair of tokens on Dex is underpinned by a [liquidity pool](#liquidity-pool).
 
 The [`DexPair`](#dexpair) contract defines the low-level swap function, while the [`DexRouter`](#dexrouter) contract performs the swap operation.
+
+#### `DEXswap`
+
+While DEX contracts ([`DexPair`](#dexpair), [`DexRouter`](#dexrouter), [`Farming`](#farming), [`StakingFactoryPool`](#stakinginitializable), [`StakingFactoty`](#stakingfactory)) do not use `safeTransfer` or `safeTransferFrom` functions from the `DEXswap` token, the `DEXswap` token (its `safeTransfer` and `safeTransferFrom` functions) can be used separately by any user to send tokens to other contracts.
+
+**Warning**: This can lead to re-entrancy attacks from contracts which are not handled by DEX.
+
+The `safeTransfer` and `safeTransferFrom` invoke external call `onKIP7Received` on the recipient address in the `_checkOnKIP7Received` function to verify if the recipient address is a `KIP7Receiver`. This `onKIP7Received(recipient)` call is a weak place. Since it is an external call to an unknown contract, where the recipient contract may define any arbitrary logic to be executed, it is possible to re-enter functions through the use of `safeTransfer` and `safeTransferFrom`.
+
+Users should check the recipient address thoroughly if they want to use these functions. They should check that it doesn't look suspicious to them and doesn't have any malicious code (unverified contracts).
+
+**Warning**: There is also a risk of double-spend allowance when `approve` and `transferFrom` are used. The avoid an attack when changing the allowance value, first set allowance to zero, then verify if it was used before setting the new value.
 
 ### Liquidity Pool
 
@@ -192,13 +217,13 @@ The contract also manages protocol-wide charge recipient. The `feeTo` defines th
 
 <!-- github table -->
 
-|          Function           |                                Description                                |
-| --------------------------- | ------------------------------------------------------------------------- |
-| [`createPair`](#createpair) | Create a pair for two given tokens if such a pair doesn't already exist.  |
-| `getPair`                   | Return the address of the pair for two given tokens if such a pair exist. |
-| `setFeeToSetter`            | Set the new address of the protocol-wide charge recipient.                |
-| `setFeeTo`                  | Allow a provided address to control protocol-wide charge recipients.      |
-| `allPairsLength`            | Return the number of created pairs.                                       |
+|          Function           |                                                                                                                                                           Description                                                                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`createPair`](#createpair) | Create a pair for two given tokens if such a pair doesn't already exist.                                                                                                                                                                                                                                                        |
+| `getPair`                   | Return the address of the pair for two given tokens if such a pair exist.                                                                                                                                                                                                                                                       |
+| `setFeeToSetter`            | Set the address which is allowed to control protocol-wide charge recipients (`feeTo` addresses). Note that a mistake in the address results in the loss of control over the fee destination as the `feeToSetter` address controls protocol-wide charge recipients.                                                              |
+| `setFeeTo`                  | Allow a provided address to control protocol-wide charge recipients. `setFeeTo` сan only be called by the `feeToSetter`, which sets a new address of the protocol-wide charge recipient. Setting the wrong address in the `setFeeTo` function leads to the protocol-wide charge being lost (transferred to that wrong address). |
+| `allPairsLength`            | Return the number of created pairs.                                                                                                                                                                                                                                                                                             |
 
 
 <!-- pdf table
@@ -206,10 +231,23 @@ The contract also manages protocol-wide charge recipient. The `feeTo` defines th
 Function                    Description
 --------------------------- -------------------------------------------------------------------------
 [`createPair`](#createpair) Create a pair for two given tokens if such a pair doesn't already exist.  
+
 `getPair`                   Return the address of the pair for two given tokens if such a pair exist.
-`setFeeToSetter`            Set the new address of the protocol-wide charge recipient.               
-`setFeeTo`                  Allow a provided address to control protocol-wide charge recipients.     
+
+`setFeeToSetter`            Set the address which is allowed to control protocol-wide charge
+                            recipients (`feeTo` addresses). Note that a mistake in the address
+                            results in the loss of control over the fee destination as the
+                            `feeToSetter` address controls protocol-wide charge recipients.
+
+`setFeeTo`                  Allow a provided address to control protocol-wide charge recipients.
+                            `setFeeTo` сan only be called by the `feeToSetter`, which sets a new
+                            address of the protocol-wide charge recipient.
+                            Setting the wrong address in the `setFeeTo` function leads to the
+                            protocol-wide charge being lost (transferred to that wrong address).
+
 `allPairsLength`            Return the number of created pairs.                                      
+
+--------------------------- -------------------------------------------------------------------------
 
 -->
 
@@ -226,6 +264,14 @@ Pair (`DexPair`) is a smart contract deployed from the Factory ([`DexFactory`](#
 Each Dex smart contract for the token pair manages a [liquidity pool](#liquidity-pool) made up of **reserves** of two ERC-20/KIP-7 tokens. The minimum liquidity for the pair of tokens is defined via `MINIMUM_LIQUIDITY` constant.
 
 The contract holds the following information in the variables: the reserves for both tokens, the timestamp of the latest block, the latest cumulative prices of both tokens, and the value of the `k` [invariant](#invariant) for the pair of tokens calculated as the product of both reserves.
+
+##### Year 2038 Problem <!--omit in toc-->
+
+Pair contracts have a [Year 2038 Problem](https://en.wikipedia.org/wiki/Year_2038_problem). This is due to the `_update` function (used to update reserves and price accumulators) casting the `block.timestamp` to `uint32`, which will wrap around in the year 2038.
+
+This only affects the `price0CumulativeLast` and `price1CumulativeLast` variables (latest cumulative prices of tokens in the pair), which are used for external price reporting. 
+
+This is not detrimental to the DEX functionality. Pair contracts are still going to work after year 2038, but will contain a bug reporting wrong cumulative prices. Other smart contracts relying on this price reporting functionality would not function correctly after the year 2038.
 
 ##### Pair Contract: Events
 
@@ -336,6 +382,8 @@ The swap operation functions in such a way that the tokens must be transferred t
 
 Refer to [`DexRouter` contract](#swapping-tokens) for more details on how swap works.
 
+**Warning**: `DEXswap` token (its `safeTransfer` and `safeTransferFrom` functions) can be used by any user to send tokens to other contracts. This can lead to re-entrancy attacks from contracts which are not handled by DEX. Refer to [`DEXswap`](#dexswap) for details.
+
 ### Periphery
 
 Periphery smart contracts are designed to support domain-specific interactions with the [core](#core). These are external smart contracts that are useful, but not required for Dex to exist. New periphery contracts can always be deployed without migrating liquidity.
@@ -400,6 +448,8 @@ The swap operation functions in such a way that the tokens must be transferred t
 The pairs check the balances of their tokens at the end of every interaction. Then, at the beginning of the next interaction, current balances are compared against the stored values to determine the amount of tokens that were sent by the current interactor.
 
 One of the input parameters for swap functions is an array of token addresses (`path`) such as that for each consecutive pair of addresses, the pair contract should exist with enough liquidity. The first element is the input token, the last element is the output token. If there is no pair contract for the input and output tokens, then the `path` defines the intermediate pairs to perform the swap operation on.
+
+**Warning**: `DEXswap` token (its `safeTransfer` and `safeTransferFrom` functions) can be used by any user to send tokens to other contracts. This can lead to re-entrancy attacks from contracts which are not handled by DEX. Refer to [`DEXswap`](#dexswap) for details.
 
 #### `DexLibrary`
 
@@ -491,7 +541,7 @@ Given an output amount of an asset (`amountOut`) and pair reserves (`reserveIn`,
 
 ### Farming and Staking
 
-Smart contracts for farming activities only support KIP7 standard tokens. Smart contracts for staking activities support both ERC20 and KIP7 standard tokens.
+Smart contracts for farming activities only support KIP7 standard tokens. Smart contracts for staking activities support both ERC20 and KIP7 standard tokens. Note that deflationary tokens and tokens with commission on transfer are not supported on DEX.
 
 Smart contracts for farming and staking are implemented using two different types of smart contracts. The main difference between the two is in the way the rewards are distributed across pools. 
 
@@ -581,7 +631,6 @@ Whenever the user `deposit`s or `withdraw`s LP tokens to a pool, the following c
 | `updateMultiplier`                        | Update reward multiplier for the specified pool. The `bonusMultiplier` in the `PoolInfo` is updated with the provided value.                                                                                                   |
 | `updatePtnPerBlock`                       | Update the number of PTN tokens created per block.                                                                                                                                                                             |
 | [`getMultiplier`](#farming-getmultiplier) | Return the reward multiplier between two given blocks for the specified pool.                                                                                                                                                  |
-| `safePtnTransfer`                         | Safely transfer the specified amount of PTN tokens to the given address. This is needed in case the rounding error causes a pool to not have enough PTN tokens.                                                                |                                                                                                                                                             |
 
 <!-- pdf table 
 
@@ -616,10 +665,7 @@ Function                                  Description
 `updatePtnPerBlock`                       Update the number of PTN tokens created per block.
 
 [`getMultiplier`](#farming-getmultiplier) Return the reward multiplier between two given blocks for the specified pool.
-
-`safePtnTransfer`                         Safely transfer the specified amount of PTN tokens to the given address.
-                                          This is needed in case the rounding error causes a pool to not have enough PTN tokens.
----------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 -->
 
@@ -656,6 +702,8 @@ Long-term staking allows users to stake the Dex token and earn other tokens as r
 
 The contract deploys a new staking pool contract using [`deployPool`](#deploypool). The created contract is owned by the [`multisig` contract](#multisignature-wallet).
 
+The `StakingFactory` contract is responsible for deploying new [`StakingInitializable`](#stakinginitializable) contracts. The factory fully initializes the new pool contract after its deployment in `deployPool`, but the reward tokens **have to be sent** to the initialized pool **manually**.
+
 ##### `deployPool`
 
 The contract for the new staking pool is deployed using `StakingInitializable` contract based on the following:
@@ -665,14 +713,18 @@ The contract for the new staking pool is deployed using `StakingInitializable` c
 - reward per block (in reward tokens)
 - the start and end blocks
 - the pool limit per user (in staked tokens)
-- the multisig address
 - the limit of the number of blocks available for a user
+- the multisig address
+
+**Note**: There are no restrictions on `startBlock` and `endBlock` values, meaning they can be set far in the future. Be advised to pay attention to the values set as the start and end blocks when deploying a pool.
 
 The function returns the address of a new staking pool contract.
 
 #### `StakingInitializable`
 
-The staking factory contract (`StakingFactory`) deploys the `StakingInitializable` contract when a new staking pool is deployed. This contract initializes a new pool.
+The staking factory contract (`StakingFactory`) deploys the `StakingInitializable` contract, which is a new staking pool. Staking factory initializes the pool after it is deployed in the `deployPool` function.
+
+Note that the reward tokens have to be sent **manually** after the deployment. If the reward tokens are not sent to the pool before `startBlock`, the `deposit` and `withdraw` functions will not work correctly on the pool. In this case, each user will be able to deposit only once since they do not have available rewards yet. After that, `deposit` and `withdraw` functions will fail with `TransferHelper: TRANSFER_FAILED`. So the reward tokens have to be sent to the pool in the time between after it gets deployed and before the `startBlock` (the block when the pool starts).
 
 The contract defines two structures: 
 - [`UserInfo`](#staking-userinfo) contains information about each user that stakes tokens
@@ -692,6 +744,12 @@ The structure contain the following information about the pool:
 - the accrued token per share
 - the amount of PTN tokens created per block
 - the total amount of staked tokens
+
+###### User Limit
+
+The `PoolInfo` structure of the Staking contract specifies whether or not there is a limit set for users (`userLimit`). If there is a limit, the `poolLimitPerUser` contains the max amount of staked tokens per user. If no limit is set, that value is zero. The `numberBlocksForUserLimit` contains information on how many blocks `poolLimitPerUser` is valid. For example, if `numberBlocksForUserLimit` is `86400` blocks, after `86400` blocks users will not have any limits.
+
+The user limit is checked with the [`hasUserLimit`](#staking-hasuserlimit) function and updated with the [`updatePoolLimitPerUser`](#staking-updatepoollimitperuser) function.
 
 ##### Staking: UserInfo
 
@@ -729,18 +787,18 @@ Whenever the user `deposit`s or `withdraw`s staked tokens to a pool, the followi
 
 ##### Staking: Functions
 
-|                  Function                   |                                                    Description                                                     |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `initialize`                                | Initialize the staking contract. The contract is owned by the [multisig contract](#multisignature-wallet).         |
-| `deposit`                                   | Deposit staked tokens and collect reward tokens (if any).                                                          |
-| `withdraw`                                  | Withdraw staked tokens and collect reward tokens (if any).                                                         |
-| `recoverToken`                              | Recover tokens sent to the contract by mistake. Can only be called by [multisig contract](#multisignature-wallet). |
-| `updatePoolLimitPerUser`                    | Update pool limit per user. Can only be called by [multisig contract](#multisignature-wallet).                     |
-| `updateRewardPerBlock`                      | Update reward per block. Can only be called by [multisig contract](#multisignature-wallet).                        |
-| `updateStartAndEndBlocks`                   | Update the start and end blocks. Can only be called by [multisig contract](#multisignature-wallet).                |
-| [`_updatePool`](#staking-_updatepool)       | Update reward variables for the given pool.                                                                        |
-| [`_getMultiplier`](#staking-_getmultiplier) | Return reward multiplier between two given blocks for the specified pool.                                          |
-| `hasUserLimit`                              | Check if the user limit is set. (?)                                                                                |
+|                           Function                            |                                                    Description                                                     |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `initialize`                                                  | Initialize the staking contract. The contract is owned by the [multisig contract](#multisignature-wallet).         |
+| `deposit`                                                     | Deposit staked tokens and collect reward tokens (if any).                                                          |
+| `withdraw`                                                    | Withdraw staked tokens and collect reward tokens (if any).                                                         |
+| `recoverToken`                                                | Recover tokens sent to the contract by mistake. Can only be called by [multisig contract](#multisignature-wallet). |
+| [`updatePoolLimitPerUser`](#staking-updatepoollimitperuser)   | Update pool limit per user. Can only be called by [multisig contract](#multisignature-wallet).                     |
+| [`updateRewardPerBlock`](#staking-updaterewardperblock)       | Update reward per block. Can only be called by [multisig contract](#multisignature-wallet).                        |
+| [`updateStartAndEndBlocks`](#staking-updatestartandendblocks) | Update the start and end blocks. Can only be called by [multisig contract](#multisignature-wallet).                |
+| [`_updatePool`](#staking-_updatepool)                         | Update reward variables for the given pool.                                                                        |
+| [`_getMultiplier`](#staking-_getmultiplier)                   | Return reward multiplier between two given blocks for the specified pool.                                          |
+| [`hasUserLimit`](#staking-hasuserlimit)                       | Check if the [user limit](#user-limit) is set.                                                                     |
 
 For emergency situations:
 
@@ -793,19 +851,80 @@ The function updates the reward variables for the given pool. If the current blo
 
 Refer to [reward debt and pending reward](#staking-reward-debt-and-pending-reward) for more information.
 
-### `AccessControl`
+###### Staking: `updateStartAndEndBlocks`
+
+Update the start and end blocks before the rewards accumulation has started. The new `startBlock` value must be lower than the new `endBlock` and higher than the current block. 
+
+**Note**: There are no restrictions on `startBlock` and `endBlock` values, meaning they can be set far in the future. Be advised to pay attention to the values used to update `startBlock` and `endBlock`.
+
+This function can only be called by the contract owner ([multisig contract](#multisignature-wallet)).
+
+**Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the start block value with `updateStartAndEndBlocks`. Since `startBlock` is used to derive the pool address, if `startBlock` is updated, you would need to use the old `startBlock` value to derive the pool address.
+
+###### Staking: `updateRewardPerBlock`
+
+Update reward per block. The reward can only be updated before the reward accumulation has started.
+
+This function can only be called by the contract owner ([multisig contract](#multisignature-wallet)).
+
+**Note**: `StakingFactory` uses the `stakedToken`, `rewardToken`, and `startBlock` parameters to derive the pool  address when the pool is deployed in `deployPool`. Until the `startBlock` is reached, the owner can change the reward token value with `updateRewardPerBlock`.
+
+###### Staking: `hasUserLimit`
+
+The function checks whether the [user limit](#user-limit) is set for the staking pool.
+
+###### Staking: `updatePoolLimitPerUser`
+
+The function updates the [user limit](#user-limit) for the staking pool. Input parameters specifies whether the user limit remains in place, and the new value for `poolLimitPerUser`. The new limit must be higher than the current limit.
+
+### Access
+
+[`Ownable`](#ownable) and [`AccessControl`](#accesscontrol) contracts regulate ownership and role-base access to DEX functionality.
+
+Owners and admins are privileged roles. Owners are allowed to modify the contract they own:
+
+- The owner of the [`Farming`](#farming) contract can update pool settings such as allocation points and rewards.
+- The owner of the [`StakingFactory](#stakingfactory) can deploy new pools.
+- The owner of the ` StakingFactoryPool` can withdraw reward tokens at any time.
+- The admin of the `PlatformToken` contract can change who gets to mint and burn tokens.
+
+This poses certain risks associated with the ownership being transferred or renounced, or admin roles being revoked. Check the warnings for the [admin role](#admin-role) and [owners](#ownable-functions).
+
+#### `Ownable`
+
+The `Ownable` contract provides basic access control mechanism: granting accounts exclusive access to specific functions. The account that was granted such exclusive access becomes an **owner** of the specified functionality.
+
+By default, the owner is the account that deploys the contract. The ownership can later be transferred to another account with `transferOwnership`.
+
+##### `Ownable`: Functions
+
+The `Ownable` contract has the following functions:
+
+|      Function       |                                                Description                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `owner`             | Return the address of the current owner.                                                                   |
+| `renounceOwnership` | Leave the contract without an owner. Can only be called by the current owner.                              |
+| `transferOwnership` | Transfer ownership of the contract to a new account (`newOwner`). Can only be called by the current owner. |
+
+**Warning**: Renouncing ownership (`renounceOwnership`) leaves the contract without an owner, thereby removing any functionality that is only available to the owner. It will no longer be possible to call `onlyOwner` and all the functions associated with the owner role.
+
+**Warning**: `TransferOwnership` should also be handled carefully. Transferring ownership to the wrong address (e.g. zero address) would also lead to all owner associated functionality being inaccessible.
+
+#### `AccessControl`
 
 The `AccessControl` contract implements role-based access.
 
 <!-- github table  -->
 
-|    Function    |                                                                                 Description                                                                                 |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hasRole`      | Check if an account has been granted the specified role.                                                                                                                    |
-| `getRoleAdmin` | Return the admin role that controls the specified role.                                                                                                                     |
-| `grantRole`    | Grant the specified role to an account. The caller has to have the admin role.                                                                                              |
-| `revokeRole`   | Revoke the specified role from an account. The caller has to have the admin role.                                                                                           |
-| `renounceRole` | Revoke the specified role from the calling account. This a mechanism for accounts to lose their privileges if they are compromised, e.g. if a trusted device was misplaced. |
+|    Function    |                                                                                        Description                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `hasRole`      | Check if an account has been granted the specified role.                                                                                                                                   |
+| `getRoleAdmin` | Return the admin role that controls the specified role.                                                                                                                                    |
+| `grantRole`    | Grant the specified role to an account. The caller has to have the admin role.                                                                                                             |
+| `revokeRole`   | Revoke the specified role from an account. The caller has to have the admin role. Note that the admin can revoke their own role. If this happens, DEX operator losses control over DEX. |
+| `renounceRole` | Revoke the specified role from the calling account. This a mechanism for accounts to lose their privileges if they are compromised, e.g. if a trusted device was misplaced.                |
+
+
 
 <!-- pdf table 
 
@@ -819,6 +938,8 @@ Function        Description
 `grantRole`     Grant the specified role to an account. The caller has to have the admin role.
 
 `revokeRole`    Revoke the specified role from an account. The caller has to have the admin role.
+                Note that the admin can revoke their own role. If this happens,
+                DEX operator losses control over DEX.
 
 `renounceRole`  Revoke the specified role from the calling account.
                 This a mechanism for accounts to lose their privileges if they are compromised,
@@ -827,7 +948,7 @@ Function        Description
 
 -->
 
-#### Roles
+##### Roles
 
 Roles are referred to by their `bytes32` identifier. These should be exposed in the external API and be unique. The best way to achieve this is by using `public constant` hash digests:
 
@@ -846,11 +967,15 @@ function foo() public {
 
 Roles can be granted and revoked dynamically via the `grantRole` and `revokeRole` functions. Each role has an associated admin role, and only accounts that have the admin role can call `grantRole` and `revokeRole`.
 
-##### Admin role
+###### Admin role
 
 By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which means that only accounts with this role will be able to grant or revoke other roles. More complex role relationships can be created by using `_setRoleAdmin`.
 
 The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission to grant and revoke this role.
+
+**Warning**: With `revokeRole`, the admin can revoke their own role (any granted role). This leads to all functionality associated with the said role being inaccessible. For example, revoking or renouncing `MINTER_ROLE` makes all associated minting functionality inaccessible.
+
+**Warning**: Renouncing or revoking `DEFAULT_ADMIN_ROLE` role leads to the admin no longer being able to grant or revoke any other roles.
 
 ## Security Concerns
 

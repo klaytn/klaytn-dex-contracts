@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0
 // Modified from https://github.com/gnosis/MultiSigWallet/blob/master/contracts/MultiSigWallet.sol
 pragma solidity =0.8.12;
-import "../utils/structs/EnumerableSet.sol";
+import "@klaytn/contracts/utils/structs/EnumerableSet.sol";
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -31,6 +31,7 @@ contract MultiSigWallet {
      */
     mapping(uint256 => Transaction) private transactions;
     EnumerableSet.AddressSet private owners;
+    mapping(address => uint256) public ownerRegistrationTime;
     uint256 public required;
     uint256 public transactionCount;
 
@@ -38,6 +39,7 @@ contract MultiSigWallet {
         address destination;
         uint256 value;
         bytes data;
+        uint256 timestamp;
         bool executed;
         EnumerableSet.AddressSet confirmations;
     }
@@ -47,11 +49,6 @@ contract MultiSigWallet {
      */
     modifier onlyWallet() {
         require(msg.sender == address(this));
-        _;
-    }
-
-    modifier ownerDoesNotExist(address owner) {
-        require(!owners.contains(owner));
         _;
     }
 
@@ -98,6 +95,8 @@ contract MultiSigWallet {
     {
         for (uint256 i = 0; i < _owners.length; i++) {
             require(_owners[i] != address(0) && owners.add(_owners[i]));
+            ownerRegistrationTime[_owners[i]] = block.timestamp;
+            emit OwnerAddition(_owners[i]);
         }
         required = _required;
     }
@@ -110,18 +109,18 @@ contract MultiSigWallet {
     function addOwner(address owner)
         public
         onlyWallet
-        ownerDoesNotExist(owner)
         notNull(owner)
         validRequirement(owners.length() + 1, required)
     {
-        owners.add(owner);
+        require(owners.add(owner));
+        ownerRegistrationTime[owner] = block.timestamp;
         emit OwnerAddition(owner);
     }
 
     /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner.
-    function removeOwner(address owner) public onlyWallet ownerExists(owner) {
-        owners.remove(owner);
+    function removeOwner(address owner) public onlyWallet {
+        require(owners.remove(owner));
         if (required > owners.length()) changeRequirement(owners.length());
         emit OwnerRemoval(owner);
     }
@@ -132,11 +131,12 @@ contract MultiSigWallet {
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
-        ownerExists(owner)
-        ownerDoesNotExist(newOwner)
+        notNull(newOwner)
     {
-        owners.remove(owner);
-        owners.add(newOwner);
+        require(owner != newOwner);
+        require(owners.remove(owner));
+        require(owners.add(newOwner));
+        ownerRegistrationTime[newOwner] = block.timestamp;
         emit OwnerRemoval(owner);
         emit OwnerAddition(newOwner);
     }
@@ -163,21 +163,25 @@ contract MultiSigWallet {
         bytes calldata data
     ) public returns (uint256 transactionId) {
         transactionId = addTransaction(destination, value, data);
-        confirmTransaction(transactionId);
+        confirmAndExecuteTransaction(transactionId);
     }
 
     /// @dev Allows an owner to confirm a transaction.
     /// @param transactionId Transaction ID.
-    function confirmTransaction(uint256 transactionId)
+    function confirmAndExecuteTransaction(uint256 transactionId)
         public
         ownerExists(msg.sender)
         transactionExists(transactionId)
     {
         require(
-            !transactions[transactionId].confirmations.contains(msg.sender),
+            ownerRegistrationTime[msg.sender] <
+                transactions[transactionId].timestamp,
+            "The owner is registered after the transaction is submitted"
+        );
+        require(
+            transactions[transactionId].confirmations.add(msg.sender),
             "Already confirmed"
         );
-        transactions[transactionId].confirmations.add(msg.sender);
         emit Confirmation(msg.sender, transactionId);
         executeTransaction(transactionId);
     }
@@ -190,14 +194,13 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         require(
-            transactions[transactionId].confirmations.contains(msg.sender),
+            transactions[transactionId].confirmations.remove(msg.sender),
             "Not confirmed"
         );
-        transactions[transactionId].confirmations.remove(msg.sender);
         emit Revocation(msg.sender, transactionId);
     }
 
-    /// @dev Allows anyone to execute a confirmed transaction.
+    /// @dev Allows an owner to execute a confirmed transaction.
     /// @param transactionId Transaction ID.
     function executeTransaction(uint256 transactionId)
         public
@@ -261,10 +264,8 @@ contract MultiSigWallet {
         view
         returns (bool confirmed_)
     {
-        confirmed_ = transactions[transactionId].confirmations.length() >=
-            required
-            ? true
-            : false;
+        confirmed_ =
+            transactions[transactionId].confirmations.length() >= required;
     }
 
     /*
@@ -285,6 +286,7 @@ contract MultiSigWallet {
         newTransaction.destination = destination;
         newTransaction.value = value;
         newTransaction.data = data;
+        newTransaction.timestamp = block.timestamp;
         newTransaction.executed = false;
         transactionCount += 1;
         emit Submission(transactionId);
@@ -293,7 +295,7 @@ contract MultiSigWallet {
     /*
      * Web3 call functions
      */
-    /// @dev Returns total number of transactions after filers are applied.
+    /// @dev Returns total number of transactions after filters are applied.
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return count Total number of transactions after filters are applied.
@@ -364,6 +366,7 @@ contract MultiSigWallet {
             address destination_,
             uint256 value_,
             bytes memory data_,
+            uint256 timestamp_,
             bool executed_,
             uint256 votesLength_
         )
@@ -372,6 +375,7 @@ contract MultiSigWallet {
         value_ = transaction.value;
         destination_ = transaction.destination;
         data_ = transaction.data;
+        timestamp_ = transaction.timestamp;
         executed_ = transaction.executed;
         votesLength_ = transaction.confirmations.length();
     }

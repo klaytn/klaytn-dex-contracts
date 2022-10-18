@@ -41,6 +41,8 @@ pipeline {
             when{
                 not {triggeredBy 'TimerTrigger'}
             }
+    stages {
+        stage('Solidity Static Scanner') {
             steps {
                 script {
                     docker.withRegistry('https://' + registry, dockerBuildToolsUserId) {

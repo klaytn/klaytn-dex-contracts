@@ -3,9 +3,9 @@ pragma solidity =0.8.12;
 
 import "../interfaces/IPlatformToken.sol";
 import "../libraries/TransferHelper.sol";
-import "../utils/access/Ownable.sol";
-import "../utils/SafeCast.sol";
-import "../utils/ReentrancyGuard.sol";
+import "@klaytn/contracts/access/Ownable.sol";
+import "@klaytn/contracts/utils/math/SafeCast.sol";
+import "@klaytn/contracts/security/ReentrancyGuard.sol";
 
 contract Farming is Ownable, ReentrancyGuard {
     // Info of each user.
@@ -85,6 +85,8 @@ contract Farming is Ownable, ReentrancyGuard {
         uint256 _startBlock,
         address _multisig
     ) {
+        require(_ptn != address(0), "PTN cannot be the zero address");
+        require(_multisig != address(0), "Multisig cannot be the zero address");
         ptn = IPlatformToken(_ptn);
         ptnPerBlock = _ptnPerBlock;
         startBlock = _startBlock;
@@ -100,6 +102,7 @@ contract Farming is Ownable, ReentrancyGuard {
         public
         onlyOwner
     {
+        require(_pid < poolInfo.length, "Pool does not exist");
         updatePool(_pid);
         poolInfo[_pid].bonusMultiplier = _multiplier.toUint32();
         emit UpdatePoolMultiplier(_pid, _multiplier);
@@ -146,21 +149,19 @@ contract Farming is Ownable, ReentrancyGuard {
      * @dev Can only be called by the multisig contract.
      * @param _allocPoint Number of allocation points for the new pool.
      * @param _lpToken Address of the LP KIP7 token.
-     * @param _withUpdate Whether call "massUpdatePools" operation.
      * @param _bonusMultiplier  The pool reward multipler.
+     * @param _bonusEndBlock The block number after which the pool doesn't get any reward bonus from `bonusMultiplier`.
+     * After this block `bonusMultiplier` is not applied during reward multiplier calculation.
      */
     function add(
         uint256 _allocPoint,
         address _lpToken,
-        bool _withUpdate,
         uint256 _bonusMultiplier,
         uint256 _bonusEndBlock
     ) public onlyOwner {
         require(_lpToken != address(ptn), "Can't stake reward token");
         require(addedTokens[_lpToken] == false, "Token already added");
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+        massUpdatePools();
         uint256 lastRewardBlock = block.number > startBlock
             ? block.number
             : startBlock;
@@ -191,16 +192,13 @@ contract Farming is Ownable, ReentrancyGuard {
      * @dev Can only be called by the multisig contract.
      * @param _pid The id of the pool. See `poolInfo`.
      * @param _allocPoint New number of allocation points for the pool.
-     * @param _withUpdate Whether call "massUpdatePools" operation.
      */
     function set(
         uint256 _pid,
-        uint256 _allocPoint,
-        bool _withUpdate
+        uint256 _allocPoint
     ) public onlyOwner {
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+        require(_pid < poolInfo.length, "Pool does not exist");
+        massUpdatePools();
         uint256 prevAllocPoint = poolInfo[_pid].allocPoint;
         if (prevAllocPoint != _allocPoint) {
             poolInfo[_pid].allocPoint = _allocPoint.toUint64();
@@ -256,6 +254,7 @@ contract Farming is Ownable, ReentrancyGuard {
      * @param _amount Amount of LP tokens to deposit.
      */
     function deposit(uint256 _pid, uint256 _amount) external nonReentrant {
+        require(_pid < poolInfo.length, "Pool does not exist");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
@@ -263,7 +262,7 @@ contract Farming is Ownable, ReentrancyGuard {
             uint256 pending = ((user.amount * pool.accPtnPerShare) /
                 ACC_PRECISION) - user.rewardDebt;
             if (pending > 0) {
-                safePtnTransfer(msg.sender, pending);
+                TransferHelper.safeTransfer(address(ptn), msg.sender, pending);
             }
         }
         if (_amount > 0) {
@@ -286,6 +285,7 @@ contract Farming is Ownable, ReentrancyGuard {
      * @param _amount Amount of LP tokens to withdraw.
      */
     function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
+        require(_pid < poolInfo.length, "Pool does not exist");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -294,7 +294,7 @@ contract Farming is Ownable, ReentrancyGuard {
         uint256 pending = ((user.amount * pool.accPtnPerShare) /
             ACC_PRECISION) - user.rewardDebt;
         if (pending > 0) {
-            safePtnTransfer(msg.sender, pending);
+            TransferHelper.safeTransfer(address(ptn), msg.sender, pending);
         }
         if (_amount > 0) {
             user.amount -= _amount;
@@ -306,24 +306,11 @@ contract Farming is Ownable, ReentrancyGuard {
     }
 
     /** 
-     * @dev Safe PTN transfer function, just in case if rounding error causes pool to not have enough PTNs.
-     * @param _to The PTN receiver address.
-     * @param _amount of PTN to transfer.
-     */
-    function safePtnTransfer(address _to, uint256 _amount) internal {
-        uint256 ptnBal = ptn.balanceOf(address(this));
-        if (_amount > ptnBal) {
-            TransferHelper.safeTransfer(address(ptn), _to, ptnBal);
-        } else {
-            TransferHelper.safeTransfer(address(ptn), _to, _amount);
-        }
-    }
-
-    /** 
     * @dev Withdraw without caring about the rewards. EMERGENCY ONLY.
     * @param _pid The id of the pool. See `poolInfo`.
     */
     function emergencyWithdraw(uint256 _pid) public nonReentrant {
+        require(_pid < poolInfo.length, "Pool does not exist");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -332,7 +319,7 @@ contract Farming is Ownable, ReentrancyGuard {
         user.amount = 0;
         user.rewardDebt = 0;
 
-        IKIP7(pool.lpToken).safeTransfer(msg.sender, oldUserAmount);
+        TransferHelper.safeTransfer(pool.lpToken, msg.sender, oldUserAmount);
         emit EmergencyWithdraw(msg.sender, _pid, oldUserAmount);
     }
 
@@ -346,6 +333,7 @@ contract Farming is Ownable, ReentrancyGuard {
         view
         returns (uint256)
     {
+        require(_pid < poolInfo.length, "Pool does not exist");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accPtnPerShare = pool.accPtnPerShare;

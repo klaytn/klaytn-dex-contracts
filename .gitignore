@@ -8,5 +8,8 @@ typechain
 cache
 artifacts
 
+#Hardhat deployments
+deployments
+
 #Mac files
 .DS_Store

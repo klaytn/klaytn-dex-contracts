@@ -1,8 +1,8 @@
 # Random mnemonic for testing. DO NOT USE IT ANYWHERE ELSE.
 MNEMONIC=south coconut arm mention amount copy hard girl lawn resemble innocent lawsuit
 FORKING=false
+FORKING_URL=https://cypress.fandom.finance/archive
 REPORT_GAS=false
-
 ADMIN_LIST=["0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000"]
 SIG_REQUIRED=1
 REWARD_PER_BLOCK=1

@@ -4,11 +4,13 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
 import * as dotenv from 'dotenv';
+import { writeDeploymentForSubgraph } from './helpers';
 
 let adminsList: string[];
 let sigRequired: string;
-let rewardPerBlock: string;
+let rewardPerBlock: BigNumber;
 dotenv.config();
 
 if (!process.env.ADMIN_LIST && !process.env.SIG_REQUIRED) {
@@ -21,7 +23,7 @@ if (!process.env.ADMIN_LIST && !process.env.SIG_REQUIRED) {
 if (!process.env.REWARD_PER_BLOCK) {
   throw new Error('Please set your rewardPerBlock param (in wei) for farming contract in the .env file');
 } else {
-  rewardPerBlock = JSON.parse(process.env.REWARD_PER_BLOCK as string);
+  rewardPerBlock = BigNumber.from(process.env.REWARD_PER_BLOCK as string);
 }
 
 async function main() {
@@ -30,18 +32,17 @@ async function main() {
   console.log('Sender address: ', deployer);
 
   // Deploy WKLAY
-  const wklay = await ethers.getContractFactory('WETH9');
+  const wklay = await ethers.getContractFactory('WKLAY');
   const wklayInstance = await wklay.deploy();
   await wklayInstance.deployed();
-
-  console.log(`WKLAY deployed to : ${wklayInstance.address}`);
+  console.log(`WKLAY deployed to: ${wklayInstance.address}`);
 
   // Deploy Dex Factory
   const factory = await ethers.getContractFactory('DexFactory');
   const factoryInstance = await factory.deploy(deployer);
   await factoryInstance.deployed();
-
-  console.log(`Dex Factory deployed to : ${factoryInstance.address}`);
+  console.log(`Dex Factory deployed to: ${factoryInstance.address}`);
+  await writeDeploymentForSubgraph('DexFactory', factoryInstance);
 
   // Deploy Dex Router passing Factory Address and WKLAY Address
   const router = await ethers.getContractFactory('DexRouter');
@@ -50,29 +51,25 @@ async function main() {
     wklayInstance.address,
   );
   await routerInstance.deployed();
-
-  console.log(`Dex Router deployed to :  ${routerInstance.address}`);
+  console.log(`Dex Router deployed to:  ${routerInstance.address}`);
 
   // Deploy Multisig passing adminsList addresses and sigRequired params from .env file
   const multisig = await ethers.getContractFactory('MultiSigWallet');
   const multisigInstance = await multisig.deploy(adminsList, sigRequired);
   await multisigInstance.deployed();
-
-  console.log(`Multisig deployed to : ${multisigInstance.address}`);
+  console.log(`Multisig deployed to: ${multisigInstance.address}`);
 
   // Deploy Multicall
   const multicall = await ethers.getContractFactory('Multicall');
   const multicallInstance = await multicall.deploy();
   await multicallInstance.deployed();
-
-  console.log(`MultiCall deployed to : ${multicallInstance.address}`);
+  console.log(`MultiCall deployed to: ${multicallInstance.address}`);
 
   // Deploy Dex Token
   const dexToken = await ethers.getContractFactory('PlatformToken');
   const dexTokenInstance = await dexToken.deploy('Klaytn DEX', 'KDEX', multisigInstance.address);
   await dexTokenInstance.deployed();
-
-  console.log(`Dex Token deployed to : ${dexTokenInstance.address}`);
+  console.log(`Dex Token deployed to: ${dexTokenInstance.address}`);
 
   // Deploy Farming
   const farming = await ethers.getContractFactory('Farming');
@@ -84,14 +81,15 @@ async function main() {
     multisigInstance.address,
   );
   await farmingInstance.deployed();
-  console.log(`Farming deployed to : ${farmingInstance.address}`);
+  console.log(`Farming deployed to: ${farmingInstance.address}`);
+  await writeDeploymentForSubgraph('Farming', farmingInstance);
 
   // Deploy Staking Factory passing multisig contract's address as a parameter
   const stakingFactory = await ethers.getContractFactory('StakingFactory');
   const stakingFactoryInstance = await stakingFactory.deploy(multisigInstance.address);
   await stakingFactoryInstance.deployed();
-
-  console.log(`Staking Factory deployed to : ${stakingFactoryInstance.address}`);
+  console.log(`Staking Factory deployed to: ${stakingFactoryInstance.address}`);
+  await writeDeploymentForSubgraph('StakingFactory', stakingFactoryInstance);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

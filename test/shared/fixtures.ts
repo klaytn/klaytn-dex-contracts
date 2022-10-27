@@ -31,7 +31,7 @@ export async function pairFixture(
 export async function routerFixture(deployer: SignerWithAddress): Promise<RouterFixture> {
   // deploy tokens
   const tokenFactory = await ethers.getContractFactory('KIP7Mock');
-  const WKLAY9Factory = await ethers.getContractFactory('WETH9');
+  const WKLAY9Factory = await ethers.getContractFactory('WKLAY');
   const tokenA = await tokenFactory.deploy(ethers.utils.parseEther('10000'));
   const tokenB = await tokenFactory.deploy(ethers.utils.parseEther('10000'));
   const WKLAY = await WKLAY9Factory.deploy();

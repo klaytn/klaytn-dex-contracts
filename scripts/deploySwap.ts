@@ -11,7 +11,7 @@ async function main() {
   console.log('Sender address: ', deployer);
 
   // Deploy WKLAY
-  const wklay = await ethers.getContractFactory('WETH9');
+  const wklay = await ethers.getContractFactory('WKLAY');
   const wklayInstance = await wklay.deploy();
   await wklayInstance.deployed();
 

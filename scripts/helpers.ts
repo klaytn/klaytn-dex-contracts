@@ -12,7 +12,7 @@ export interface Networks {
   [key: string]: DeployDetails
 }
 
-export const writeDeploymentForSubgraph = async (
+export const writeDeployment = async (
   type: string,
   contractInstance: Contract,
 ): Promise<void> => {

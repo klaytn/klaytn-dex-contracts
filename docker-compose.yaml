@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+  app:
+    build: .
+    volumes:
+      - ./.env:/app/.env
+      - ./deployments:/app/deployments
+    environment:
+      DEX_NETWORK_NAME: baobab

@@ -4,6 +4,8 @@ Open-source DEX for Klaytn. This repository is for smart-contracts part of DEX.
 
 ## Deploy
 Before deployment, please, set up all required parameters in your .env file described in the .env.example.
+
+### Using command line
 To deploy all DEX Smart Contracts, please run 
 ```bash 
 npx hardhat run scripts/deployDEX.ts --network `network`
@@ -20,6 +22,27 @@ npx hardhat run scripts/deployDEX.ts --network baobab
 Example (default hardhat network):
 ```bash 
 npx hardhat run scripts/deployDEX.ts
+```
+
+### Using Docker
+Docker and docker-compose are required for this step.
+
+You can see the following in `docker-compose.yaml`. Please update `DEX_NETWORK_NAME` you want to deploy.
+```yaml
+version: "3.7"
+
+services:
+  app:
+    build: .
+    volumes:
+      - ./.env:/app/.env
+      - ./deployments:/app/deployments
+    environment:
+      DEX_NETWORK_NAME: baobab
+```
+
+```bash
+docker-compose up --build
 ```
 
 ## Tests

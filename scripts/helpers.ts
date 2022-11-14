@@ -22,7 +22,7 @@ export const writeDeployment = async (
     [name]:
       {
         [type]: {
-          address: contractInstance.address,
+          address: contractInstance.address.toLowerCase(),
           startBlock: BigNumber.from(txReceipt.blockNumber).toNumber(),
         },
       },

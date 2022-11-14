@@ -1,3 +1,8 @@
+# Branch name will be changed
+
+We will change the `master` branch to `main` on Nov 1, 2022.
+After the branch policy change, please check your local or forked repository settings.
+
 # Klaytn-DEX Project
 
 Open-source DEX for Klaytn. This repository is for smart-contracts part of DEX.

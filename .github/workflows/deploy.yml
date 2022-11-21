@@ -12,28 +12,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
       - name: Installing Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-    - name: Deploy smart contracts
-      run: |
-        npm install --save-dev hardhat
-        npm install
+      - name: Deploy smart contracts
+        run: |
+          npm install --save-dev hardhat
+          npm install
 
-        npx hardhat compile
-        npx hardhat run ./scripts/deployDEX.ts --network $DEX_NETWORK_NAME
+          npx hardhat compile
+          npx hardhat run ./scripts/deployDEX.ts --network $DEX_NETWORK_NAME
 
-        ls -al deployments
-        tar cfz deployments.tar.gz deployments
-      
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: deployments.tar.gz
-        asset_name: deployments.tar.gz
-        asset_content_type: application/gzip
+          ls -al deployments
+          tar cfz deployments.tar.gz deployments
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: deployments.tar.gz
+          asset_name: deployments.tar.gz
+          asset_content_type: application/gzip

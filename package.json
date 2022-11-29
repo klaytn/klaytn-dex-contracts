@@ -1,4 +1,41 @@
 {
+  "name": "@klaytn/dex-contracts",
+  "description": "This repository is for smart-contracts part of klaytn's opensource DEX.",
+  "version": "0.0.1",
+  "scripts": {
+    "compile": "hardhat compile",
+    "coverage": "env COVERAGE=true hardhat coverage",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
+    "lint:js": "eslint --ignore-path .gitignore .",
+    "clean": "hardhat clean && rimraf build contracts/build",
+    "test": "hardhat test"
+  },
+  "files": [
+    "/contracts/**/*.sol",
+    "/artifacts/contracts/**/*.json",
+    "!/contracts/mocks/**/*",
+    "!/artifacts/contracts/mocks/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/klaytn/klaytn-dex-contracts.git"
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart",
+    "contracts",
+    "security",
+    "klaytn",
+    "dex"
+  ],
+  "author": "Klaytn Community <developer@klaytn.foundation>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/klaytn/klaytn-dex-contracts/issues"
+  },
+  "homepage": "https://github.com/klaytn/klaytn-dex-contracts#readme",
   "devDependencies": {
     "@klaytn/contracts": "^1.0.4",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.2",

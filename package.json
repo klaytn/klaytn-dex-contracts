@@ -14,8 +14,10 @@
   "files": [
     "/contracts/**/*.sol",
     "/artifacts/contracts/**/*.json",
+    "/typechain/**",
     "!/contracts/mocks/**/*",
-    "!/artifacts/contracts/mocks/*"
+    "!/artifacts/contracts/mocks/*",
+    "!/typechain/**/mocks/*"
   ],
   "repository": {
     "type": "git",

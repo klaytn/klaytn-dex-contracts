@@ -27,13 +27,8 @@ jobs:
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
-      - run: |
-          cd ${{ env.GITHUB_WORKSPACE }}/contracts
-          cp ../README.md README.md
-          npm ci
+      - run: npm ci
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
-        env:
-          GITHUB_WORKSPACE: ${GITHUB_WORKSPACE}

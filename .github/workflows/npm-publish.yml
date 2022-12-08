@@ -4,9 +4,9 @@
 name: Publish NPM package
 
 on:
-  release:
-    types: [created]
-
+  tags:
+      - v[0-9].[0-9].[0-9]
+      
 jobs:
   build:
     runs-on: ubuntu-latest
